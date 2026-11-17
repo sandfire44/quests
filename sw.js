@@ -1,5 +1,5 @@
 // Family Quests offline support. Bump VERSION with every upload.
-const VERSION="4.4";
+const VERSION="4.6";
 const CACHE="family-quests-"+VERSION;
 const FILES=["./","./index.html","./manifest.webmanifest","./icon-180.png","./icon-192.png","./icon-512.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)))});

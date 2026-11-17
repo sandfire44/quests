@@ -158,7 +158,7 @@ table.rv{width:100%;border-collapse:collapse;font-size:.95rem}table.rv td{paddin
 <div id="app"></div><div id="modal"></div><div id="toast"></div><div id="timer"></div>
 <script>
 "use strict";
-const APP_VERSION="4.4";
+const APP_VERSION="4.6";
 /* ===== storage ===== */
 const KEY="familyquests.v3";let S=null,mem=null;
 function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):mem}catch(e){return mem}}
@@ -237,8 +237,12 @@ function overflow(){if(!S.settings.allowCash)return 0;const over=balance()-curCa
   S.ledger.push({t:nowT(),type:"overflow",unit:"min",amt:-over,note:"Minutes bank full → piggy bank"});
   S.ledger.push({t:nowT(),type:"deposit",unit:"p",amt:pence(over),note:`${over} extra minutes (bank full)`});
   setTimeout(()=>{toast(`Minutes bank full! ${over} extra minutes became ${money(pence(over))} in your piggy bank 🐷`)},50);return over}
-function pendingList(){const out=[];S.quests.forEach(q=>{if(!active(q))return;q.slots.forEach((sl,i)=>{const m=markOf(q,i);if(m&&m.s==="p")out.push({q,i,sl})})});return out}
-function approve(it,pts){const m=markOf(it.q,it.i);m.s="a";m.pts=pts;earn(it.q,pts,pts===1&&it.q.kind==="prompt"?" (one reminder)":"",m.wk);save();checkAuto()}
+/* waiting ticks from the last 14 days, oldest first, so a missed night is never lost */
+function pendingList(){const out=[],d=new Date();d.setDate(d.getDate()-14);const cut=dkey(d);
+  Object.entries(S.marks).forEach(([key,m])=>{if(m.s!=="p")return;const [qid,per,i]=key.split("|"),q=S.quests.find(x=>x.id===qid);if(!q||q.kind==="spot")return;
+    const day=per.startsWith("w")?null:per;if(day&&day<cut)return;out.push({q,i:+i,sl:q.slots[+i]||"",key,day,t:m.t||0})});
+  return out.sort((a,b)=>(a.day||"").localeCompare(b.day||"")||a.t-b.t)}
+function approve(it,pts){const m=it.key?S.marks[it.key]:markOf(it.q,it.i);m.s="a";m.pts=pts;earn(it.q,pts,pts===1&&it.q.kind==="prompt"?" (one reminder)":"",m.wk);save();checkAuto()}
 function rollWeek(){if(S.weekOf!==weekKey()){if(S.next){S.quests=S.next;S.next=null}S.weekOf=weekKey();compact();save()}if(S.settings.holidayUntil&&!holidayOn()&&balance()>curCap()){overflow();save()}}
 /* keep storage small: after 8 weeks, a week's minute entries become one summary line and old ticks are cleared */
 function compact(){
@@ -501,7 +505,7 @@ function openParent(){
   const tabs=[["approve","Approve"],["spot","Spot it"],["pay","Pay out"],["review","Week review"],["quests","Quests"],["settings","Settings"]];
   const pend=pendingList();let body="";
   if(ptab==="approve"){
-    body=pend.length?pend.map((it,k)=>`<div class="li"><span class="e">${it.q.icon}</span><div class="m"><b>${esc(it.q.name)}</b><small>Done looks like: ${esc(it.q.done)}</small>${it.q.kind==="check"?checkSummary():""}</div>
+    body=pend.length?pend.map((it,k)=>`<div class="li"><span class="e">${it.q.icon}</span><div class="m"><b>${esc(it.q.name)}${it.sl?" · "+esc(it.sl):""}${it.day&&it.day!==today()?` <span class="chip" style="font-size:.78rem;padding:2px 8px;background:var(--pend);border:0">${fmtDate(it.day)}</span>`:""}</b><small>Done looks like: ${esc(it.q.done)}</small>${it.q.kind==="check"?checkSummary(it.day):""}</div>
       <button class="btn sm alt" data-act="reject" data-k="${k}">Not yet</button>${it.q.kind==="prompt"?`<button class="btn sm alt" data-act="approve" data-k="${k}" data-p="1">One reminder +1</button><button class="btn sm ok" data-act="approve" data-k="${k}" data-p="2">No reminder +2</button>`:`<button class="btn sm ok" data-act="approve" data-k="${k}" data-p="${it.q.reward}">Approve +${it.q.reward}</button>`}</div>`).join("")
       +`<div class="row" style="margin-top:4px"><button class="btn ok" data-act="apall">✓ Approve all${pend.some(i=>i.q.kind==="prompt")?" (except reminder ones)":""}</button></div><p class="note">“Not yet” just clears it — nothing is taken away. Name what they did as you approve: it's the praise that builds the habit.</p>`:`<p class="muted">Nothing waiting. 🎉</p>`;
     body+=`<div id="praiseBox"></div>`;
@@ -552,7 +556,7 @@ function openParent(){
       (()=>{if(!S.settings.challengeOn)return "";const c=D.find(q=>q.bonus&&!q.paused),cur=S.quests.find(q=>q.bonus&&!q.paused);
         return `<div class="card" style="border-color:var(--gold);border-style:dashed;background:#FFFCEB"><b>⭐ Challenge of the week</b> <span class="muted">— a bonus trial: earns ${tok()} but isn't in the target, so it can only help.</span>
         <p style="margin:8px 0">${cur?`This week: ${cur.icon} <b>${esc(cur.name)}</b>`:"No challenge this week."}${S.next?`<br>From ${nextSat()}: ${c?`${c.icon} <b>${esc(c.name)}</b>`:"none"}`:""}</p>
-        <div class="row"><button class="btn sm" data-act="cset">${c?"Change":"Set"} next week's challenge</button>${c?`<button class="btn sm alt" data-act="qedit" data-q="${c.id}">Edit</button><button class="btn sm alt" data-act="cpromote" data-q="${c.id}">Make it a regular quest</button><button class="btn sm alt" data-act="cremove" data-q="${c.id}">Remove</button>`:""}</div></div>`})()+
+        <div class="row"><button class="btn sm" data-act="cset">${c||cur?"New":"Set a"} challenge</button>${c&&S.next&&(!cur||cur.id!==c.id)?`<button class="btn sm alt" data-act="cstartq" data-q="${c.id}">⚡ Start it now</button>`:""}${c?`<button class="btn sm alt" data-act="qedit" data-q="${c.id}">Edit</button><button class="btn sm alt" data-act="cpromote" data-q="${c.id}">Make it a regular quest</button><button class="btn sm alt" data-act="cremove" data-q="${c.id}">Remove</button>`:""}</div></div>`})()+
       `<p style="font-weight:800">Regular quests: ${n} of ${S.settings.maxQuests}</p>`+
       D.filter(q=>!q.bonus).map(q=>`<div class="li"><span class="e" style="${q.paused||q.mastered?"opacity:.4":""}">${q.icon}</span><div class="m"><b>${esc(q.name)}${q.mastered?" · 🏆 mastered":q.paused?" · paused":""}</b>
         <small>${q.kind==="spot"?"Spot it → badge (not counted)":REP[q.repeat]+" · "+(q.kind==="prompt"?"2 / 1 with reminder":q.kind==="check"?"Feelings check-in · "+q.reward:q.reward)+" "+tok()}</small></div>
@@ -564,7 +568,7 @@ function openParent(){
     <p style="margin-top:18px"><button class="btn sm alt" data-act="relock">🔒 Lock</button></p></div></div>`;
   const imp=$("#imp");if(imp)imp.onchange=doImport;
 }
-function checkSummary(){const c=S.checkins.find(x=>x.d===today());return c?`<small style="display:block;margin-top:4px;color:var(--ink)">${c.feel} ${esc(c.feelName)}${c.helped.length?" · helped by "+c.helped.map(esc).join(", "):""}${c.good?" · ✨ "+esc(c.good):""}</small><small>Ask about it — the chat is the real reward.</small>`:""}
+function checkSummary(day){const c=S.checkins.find(x=>x.d===(day||today()));return c?`<small style="display:block;margin-top:4px;color:var(--ink)">${c.feel} ${esc(c.feelName)}${c.helped.length?" · helped by "+c.helped.map(esc).join(", "):""}${c.good?" · ✨ "+esc(c.good):""}</small><small>Ask about it — the chat is the real reward.</small>`:""}
 function FREE_HTML(){return `<h2>🎁 Free session</h2><p class="note" style="margin-top:-4px">For occasions grown-ups choose — not because someone asked. Doesn't use their minutes or this week's allowance.</p>
      <div class="seg" style="margin-bottom:8px">${["Long journey","Unwell","Visitors","Rainy holiday day","Special occasion"].map(r=>`<button data-act="freason" data-v="${r}">${r}</button>`).join("")}</div>
      <div class="row"><input type="text" id="frs" maxlength="50" placeholder="Reason (required)" style="flex:1;min-width:200px"><input type="number" id="frm" min="5" step="5" value="30" style="width:100px"><span class="muted">min</span><button class="btn" data-act="fgo">Start free session</button></div>`}
@@ -609,7 +613,7 @@ function badgeForm(q){const isNew=!q._orig,n=isNew?0:S.badges.filter(b=>b.qid===
   <p class="note">Badges start straight away — they don't change targets or minutes. Keep 3–4 on at a time.</p><div class="err" id="berr"></div>`}
 function questForm(q){
   const isNew=!q._orig;
-  return `${q.bonus?`<div class="banner">⭐ Challenge of the week — a bonus trial. It earns ${tok()} but isn't counted in the target. Starts Saturday.</div>`:""}<div class="f"><label>Picture</label><div class="emojis">${ICONS.map(e=>`<button data-act="qicon" data-e="${e}" aria-pressed="${q.icon===e}">${e}</button>`).join("")}</div></div>
+  return `${q.bonus?`<div class="banner">⭐ Challenge of the week — a bonus trial. It earns ${tok()} but isn't counted in the target. Start it now or from Saturday.</div>`:""}<div class="f"><label>Picture</label><div class="emojis">${ICONS.map(e=>`<button data-act="qicon" data-e="${e}" aria-pressed="${q.icon===e}">${e}</button>`).join("")}</div></div>
   <div class="f"><label for="q_name">Name</label><input id="q_name" type="text" maxlength="40" value="${esc(q.name)}"></div>
   <div class="f"><label for="q_done">Done looks like… <span class="muted">(what the child sees)</span></label><input id="q_done" type="text" maxlength="140" value="${esc(q.done)}"></div>
   <div class="f"><label for="q_praise">Praise to say when you approve</label><input id="q_praise" type="text" maxlength="120" value="${esc(q.praise||"")}"></div>
@@ -618,8 +622,8 @@ function questForm(q){
   <div class="f"><label>Times a day</label><div class="seg"><button data-act="qslots" data-v="1" aria-pressed="${q.slots.length===1}">Once</button><button data-act="qslots" data-v="2" aria-pressed="${q.slots.length===2}">Morning & night</button></div></div>`:""}
   ${q.kind==="reward"||q.kind==="check"?`<div class="f"><label for="q_rew">${tok()} earned${q.slots.length>1?" each time":""}</label><input id="q_rew" type="number" min="0" max="5" value="${q.reward}" style="width:140px"></div>`:""}
   <div class="f"><label for="q_steps">Picture checklist (optional, emoji)</label><input id="q_steps" type="text" maxlength="20" value="${esc(q.steps||"")}"></div>
-  <div class="row"><button class="btn" data-act="qsave">${isNew?"Add quest":"Save"}</button><button class="btn alt" data-act="qcancel">Cancel</button>${isNew?"":`<button class="btn alt" data-act="qdel" style="color:#D62839;margin-left:auto">Delete</button>`}</div>
-  <p class="note">Saved for next Saturday.</p><div class="err" id="qerr"></div>`}
+  <div class="row">${q.bonus?`<button class="btn" data-act="cnow">⚡ Start now</button><button class="btn alt" data-act="qsave">From Saturday</button>`:`<button class="btn" data-act="qsave">${isNew?"Add quest":"Save"}</button>`}<button class="btn alt" data-act="qcancel">Cancel</button>${isNew?"":`<button class="btn alt" data-act="qdel" style="color:#D62839;margin-left:auto">Delete</button>`}</div>
+  ${q.bonus?`<p class="note">“Start now” replaces this week's challenge straight away — safe, because it's a bonus and doesn't change their target. It carries on into next week unless you change it.</p>`:`<p class="note">Saved for next Saturday.</p>`}<div class="err" id="qerr"></div>`}
 function readQ(){const q=editing,v=id=>$(id)?.value;if(!q)return;
   if($("#q_name"))q.name=v("#q_name").trim();if($("#q_done"))q.done=v("#q_done").trim();if($("#q_praise"))q.praise=v("#q_praise").trim();
   if($("#q_rew"))q.reward=Math.max(0,parseInt(v("#q_rew"))||0);if($("#q_steps"))q.steps=v("#q_steps").trim()}
@@ -697,7 +701,7 @@ document.addEventListener("click",e=>{
     case "ptab":ptab=d.v;editing=null;openParent();break;
     case "approve":{const it=pendingList()[+d.k];if(!it)break;approve(it,+d.p);chime();openParent();showPraise(it.q);render();break}
     case "apall":{const L=pendingList().filter(i=>i.q.kind!=="prompt");L.forEach(it=>approve(it,it.q.reward));chime();if(S.layout==="picture")say("Well done "+S.name+"! You got "+L.reduce((a,i)=>a+i.q.reward,0)+" stars today!");openParent();render();toast(L.length+" approved");break}
-    case "reject":{const it=pendingList()[+d.k];if(!it)break;delete S.marks[mk(it.q,it.i)];save();openParent();render();break}
+    case "reject":{const it=pendingList()[+d.k];if(!it)break;delete S.marks[it.key||mk(it.q,it.i)];save();openParent();render();break}
     case "award":{const q=Q(d.q);S.badges.push({t:nowT(),qid:q.id,name:q.name,icon:q.badgeIcon||q.icon});save();chime();if(S.layout==="picture")say("Wow, "+S.name+"! You got a "+q.name+" badge!");openParent();showPraise(q,`<br>${q.badgeIcon||q.icon} Badge added.`);render();break}
     case "forgot":{const x=120+Math.floor(Math.random()*780),y=13+Math.floor(Math.random()*77);forgotAns=x*y;pinCb=null;pinBuf="";
       $("#modal").innerHTML=sheet(`<h3>Reset the PIN</h3><p class="muted">A grown-up sum, to keep little hands out:</p><div class="f"><label for="fa">What is ${x} × ${y}?</label><input id="fa" type="number" inputmode="numeric"></div><div class="f"><label for="fp">New 4-digit PIN</label><input id="fp" type="password" inputmode="numeric" maxlength="4"></div><div class="err" id="ferr"></div><button class="btn" data-act="forgotgo">Reset PIN</button>`);break}
@@ -732,6 +736,10 @@ document.addEventListener("click",e=>{
     case "qrep":readQ();editing.repeat=d.v;openParent();break;
     case "qslots":readQ();editing.slots=d.v==="2"?["Morning","Night"]:[""];openParent();break;
     case "qkind":readQ();editing.kind=d.v;if(d.v==="spot"){editing.repeat="weekly";editing.reward=0;editing.badgeIcon=editing.icon}else if(d.v==="prompt")editing.reward=2;else if(!editing.reward)editing.reward=1;openParent();break;
+    case "cnow":{readQ();if(!editing.name)return $("#qerr").textContent="Give it a name.";const o=editing._orig;delete editing._orig;
+      const put=L=>{if(!L)return L;L=L.filter(q=>!q.bonus||q.id===(o||editing.id));const i=L.findIndex(q=>q.id===(o||editing.id));if(i>=0)L[i]=clone(editing);else L.push(clone(editing));return L};
+      S.quests=put(S.quests);if(S.next)S.next=put(S.next);editing=null;save();chime();openParent();render();toast("⚡ Challenge started now");break}
+    case "cstartq":{const c=S.next.find(q=>q.id===d.q);S.quests=S.quests.filter(q=>!q.bonus).concat([clone(c)]);save();chime();openParent();render();toast("⚡ Challenge started now");break}
     case "cset":editing={id:uid(),icon:"⭐",name:"",done:"",praise:"",repeat:"daily",slots:[""],reward:1,kind:"reward",paused:false,mastered:false,steps:"",bonus:true};openParent();break;
     case "cremove":{const D=clone(draftList()).filter(q=>q.id!==d.q);S.next=D;save();openParent();break}
     case "cpromote":{const D=clone(draftList()),q=D.find(x=>x.id===d.q);q.bonus=false;if(commitDraft(D,"#qlerr")){toast("It becomes a regular quest from Saturday");openParent()}break}
