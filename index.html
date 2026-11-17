@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Quests">
+<meta name="theme-color" content="#FFF5F8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Family Quests</title>
+<style>
+:root{
+  --bg:#FFF7EC;--card:#fff;--ink:#2B2340;--muted:#7A7090;--line:#EFE4D4;--accent:#FF6B4A;--accent-ink:#fff;--teal:#1FB5A6;--gold:#FFB703;
+  --pend:#FFE29A;--pend-ink:#7A5A00;--ok:#2BB673;--soft:#FFF0E6;--r:20px;
+  --font:ui-rounded,"SF Pro Rounded","Nunito","Segoe UI Rounded",system-ui,-apple-system,sans-serif;
+}
+body.th-cat{--bg:#FFF5F8;--line:#FBDCE6;--accent:#FF7FA6;--soft:#FFE8F0;--teal:#5CBFB2;--gold:#FFC857;--ink:#3A2E3F}
+body.th-race{--bg:#EEF3FF;--line:#D3DDF3;--accent:#E63946;--soft:#E4ECFF;--teal:#1D7FD1;--gold:#FFB703;--ink:#14213D}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.4 var(--font)}
+body{padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0);min-height:100vh;-webkit-user-select:none;user-select:none}
+body.th-cat{background-image:radial-gradient(#FFD9E5 1.5px,transparent 1.6px);background-size:26px 26px}
+input,textarea,select{-webkit-user-select:text;user-select:text}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.wrap{max-width:940px;margin:0 auto;padding:16px 20px 120px}
+.top{display:flex;align-items:center;gap:12px;padding:6px 0 14px}
+.top h1{margin:0;font-size:1.7rem;font-weight:900;flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+.top h1 small{display:block;font-size:.85rem;font-weight:700;color:var(--muted)}
+body.th-race .top{position:relative;margin-bottom:16px;padding-bottom:20px}body.th-race .top::after{content:"";position:absolute;left:0;right:0;bottom:0;height:10px;border-radius:3px;background:repeating-conic-gradient(#14213D 0 25%,#fff 0 50%) 0 0/10px 10px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:2px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:800;font-size:1.05rem;white-space:nowrap}
+.lock{width:46px;height:46px;border-radius:50%;background:var(--card);border:2px solid var(--line);font-size:1.3rem;display:grid;place-items:center;position:relative;flex:none}
+.dot{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:10px;background:var(--accent);color:#fff;font-size:.72rem;font-weight:800;display:grid;place-items:center;padding:0 5px}
+.tabs{display:flex;gap:6px;background:var(--card);border:2px solid var(--line);border-radius:16px;padding:5px;margin-bottom:16px}
+.tabs button{flex:1;padding:10px 6px;border-radius:12px;font-weight:800;color:var(--muted)}
+.tabs button[aria-current=true]{background:var(--accent);color:var(--accent-ink)}
+h2{font-size:1rem;margin:22px 0 10px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+.card{background:var(--card);border:2px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-bottom:14px}
+.muted{color:var(--muted)}.note{font-size:.88rem;color:var(--muted)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+/* progress track */
+.trk{position:relative;height:22px;border-radius:11px;background:var(--line);margin:30px 34px 30px 4px}
+.trk>i{display:block;height:100%;border-radius:11px;background:linear-gradient(90deg,var(--gold),var(--accent))}
+body.th-race .trk{background:repeating-linear-gradient(90deg,#9AA7C2 0 14px,#B9C4DB 14px 28px);height:26px}
+.trk .mv{position:absolute;top:50%;transform:translate(-50%,-62%);font-size:2.1rem;line-height:1;transition:left .6s}
+.trk .end{position:absolute;right:-34px;top:50%;transform:translateY(-55%);font-size:1.9rem}
+.trk .mk{position:absolute;top:-8px;bottom:-8px;width:3px;border-radius:2px;background:var(--ink);transform:translateX(-50%)}
+.trk .mk em{position:absolute;top:34px;left:50%;transform:translateX(-50%);font:800 .72rem var(--font);font-style:normal;white-space:nowrap}
+.trk .mk.tm{background:var(--teal)}.trk .mk.tm em{color:var(--teal);top:-22px}
+.wkhead{display:flex;justify-content:space-between;gap:6px 14px;flex-wrap:wrap;font-weight:800}
+/* quest cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.q{background:var(--card);border:2px solid var(--line);border-radius:var(--r);padding:16px;display:flex;gap:14px;align-items:flex-start}
+.q.alldone{border-color:#BFEBD3;background:#F6FFF9}
+.q .ic{font-size:2.3rem;line-height:1;width:54px;height:54px;display:grid;place-items:center;background:var(--soft);border-radius:18px;flex:none}
+.q .bd{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.q .nm{font-weight:900;font-size:1.1rem}.q .dl{font-size:.88rem;color:var(--muted);margin-top:-6px}.q .rw{font-size:.82rem;font-weight:800;color:var(--teal)}
+.slots{display:flex;gap:8px;flex-wrap:wrap}
+.slot{border-radius:12px;padding:9px 14px;font-weight:800;font-size:.95rem;background:var(--accent);color:var(--accent-ink)}
+.slot.p{background:var(--pend);color:var(--pend-ink)}.slot.a{background:#DDF6E8;color:#17804F}
+.mast{display:flex;gap:8px;flex-wrap:wrap}.mast span{background:var(--card);border:2px dashed var(--line);border-radius:12px;padding:6px 12px;font-weight:700;font-size:.9rem}
+.big{font-size:3rem;font-weight:900;line-height:1;color:var(--accent)}
+.meter{height:14px;border-radius:7px;background:var(--line);overflow:hidden;margin-top:8px}.meter i{display:block;height:100%;background:var(--teal)}
+.badges{display:flex;gap:10px;flex-wrap:wrap}
+.badge{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px;text-align:center;min-width:92px}
+.badge b{display:block;font-size:2rem;line-height:1.1}.badge span{font-size:.72rem;font-weight:700;color:var(--muted)}
+.hist div{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:.95rem}
+.hist div span:last-child{font-weight:800;white-space:nowrap}.plus{color:var(--ok)}.minus{color:var(--accent)}
+.entry{padding:12px 0;border-top:1px solid var(--line)}.entry small{color:var(--muted);font-weight:700;display:block}
+/* team */
+.team{display:flex;align-items:center;gap:14px}
+.team .ti{font-size:2.4rem;flex:none}
+.team .tb{flex:1;min-width:0}
+.team b{display:block;font-weight:900}
+.halves{display:flex;gap:6px;margin-top:8px}.halves span{flex:1;height:14px;border-radius:7px;background:var(--line);overflow:hidden}.halves span i{display:block;height:100%;background:var(--teal)}
+.yay{background:#FFF8D6;border-color:#F5D96B}
+/* forms */
+textarea,input[type=text],input[type=number],input[type=password]{font:inherit;color:var(--ink);background:#fff;border:2px solid var(--line);border-radius:14px;padding:12px 14px;width:100%}
+textarea{min-height:90px;resize:vertical}
+.btn{background:var(--accent);color:var(--accent-ink);border-radius:14px;padding:12px 20px;font-weight:800}
+.btn.alt{background:var(--card);color:var(--ink);border:2px solid var(--line)}.btn.ok{background:var(--ok);color:#fff}.btn.sm{padding:8px 14px;font-size:.92rem}.btn:disabled{opacity:.4}
+.q.bonus{border-color:var(--gold);border-style:dashed;background:#FFFCEB}
+.ribbon{font:900 .75rem var(--font);text-transform:uppercase;letter-spacing:.06em;color:#9A6B00}
+.tile.bonus{border-color:var(--gold);border-style:dashed;background:#FFFCEB}
+.bstrip{display:flex;gap:10px;margin:-4px 0 14px;flex-wrap:wrap}
+.bstrip .bc{flex:1;min-width:140px;max-width:220px;display:flex;align-items:center;gap:10px;background:var(--card);border:2px solid var(--line);border-radius:16px;padding:8px 12px}
+.bstrip .bnote{width:100%;font-size:.75rem;font-weight:700;color:var(--muted);margin-top:-4px}
+.bstrip .bc b{font-size:1.8rem;line-height:1}.bstrip .bc .n{font:900 1.3rem/1 var(--font);color:var(--accent)}
+.bstrip .bc small{display:block;color:var(--muted);font-weight:700;font-size:.78rem}
+.bstrip .bc.zero b{opacity:.35}.bstrip .bc.zero .n{color:var(--muted);font-size:.85rem}
+.bstrip .bc.got{border-color:var(--gold);background:#FFFCEB}
+.btally{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.bt{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:12px;display:flex;gap:12px;align-items:center}
+.bt b{font-size:2.3rem;line-height:1}.bt .n{font:900 1.5rem/1 var(--font);color:var(--accent)}.bt small{display:block;color:var(--muted);font-weight:700;font-size:.78rem}
+.bt .lv{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:6px}.bt .lv i{display:block;height:100%;background:var(--gold)}
+.mbank .bal{font:900 2.8rem/1 var(--font);color:#17804F}
+.goal{margin-top:12px;background:var(--soft);border-radius:14px;padding:10px 12px}
+.mh div{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:.95rem}.mh div span:last-child{font-weight:800;white-space:nowrap}
+/* picture */
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.tile{background:var(--card);border:4px solid var(--line);border-radius:28px;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;position:relative;min-height:230px;justify-content:center}
+.tile .em{font-size:5rem;line-height:1}.tile .lb{font-weight:900;font-size:1.15rem}.tile .steps{font-size:1.4rem;letter-spacing:3px}
+.tile .sd span{display:inline-flex;gap:4px;font-weight:800;font-size:.95rem;border-radius:999px;padding:4px 10px;background:var(--soft)}
+.tile .sd span.p{background:var(--pend);color:var(--pend-ink)}
+.tile.done{border-color:#9EE0BE;background:#F3FFF8}.tile.done::after{content:"✓";position:absolute;top:8px;right:14px;font-size:1.8rem;font-weight:900;color:#17804F}
+.pbtns{display:flex;gap:14px;margin-top:16px;flex-wrap:wrap}
+.pbtn{flex:1;min-width:200px;background:var(--card);border:4px solid var(--line);border-radius:24px;padding:16px;font-weight:900;font-size:1.2rem;display:flex;align-items:center;justify-content:center;gap:10px}.pbtn span{font-size:2.2rem}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(30,22,50,.55);z-index:50;display:grid;place-items:center;padding:20px}
+.sheet{background:var(--bg);border-radius:28px;width:min(640px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:22px;position:relative}
+.sheet.wide{width:min(880px,100%)}
+.x{position:absolute;top:14px;right:14px;width:42px;height:42px;border-radius:50%;background:var(--card);border:2px solid var(--line);font-size:1.2rem;font-weight:800}
+.center{text-align:center}.sheet h3{margin:6px 0;font-size:1.5rem}
+.pad{display:grid;grid-template-columns:repeat(3,76px);gap:12px;justify-content:center;margin:16px 0 6px}
+.pad button{height:76px;border-radius:22px;background:var(--card);border:2px solid var(--line);font-size:1.7rem;font-weight:800}
+.pins{display:flex;gap:14px;justify-content:center;margin:8px 0}.pins i{width:18px;height:18px;border-radius:50%;border:3px solid var(--muted)}.pins i.on{background:var(--ink);border-color:var(--ink)}
+.shake{animation:sh .35s}@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.err{color:#D62839;font-weight:700;min-height:1.4em}
+.ptabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 50px 16px 0}
+.ptabs button{padding:9px 13px;border-radius:12px;font-weight:800;background:var(--card);border:2px solid var(--line)}
+.ptabs button[aria-current=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.li{display:flex;gap:12px;align-items:center;background:var(--card);border:2px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px;flex-wrap:wrap}
+.li .e{font-size:2rem;flex:none}.li .m{flex:1;min-width:180px}.li .m b{display:block}.li .m small{color:var(--muted)}
+.praise{background:#FFF8D6;border:2px solid #F5D96B;border-radius:16px;padding:12px 14px;margin:10px 0;font-weight:600}
+.banner{background:#E7F6FF;border:2px solid #B5DDF5;border-radius:16px;padding:12px 14px;margin-bottom:12px;font-weight:600}
+.f{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}.f label{font-weight:800;font-size:.9rem}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.emojis{display:flex;flex-wrap:wrap;gap:6px}
+.emojis button{font-size:1.7rem;width:52px;height:52px;border-radius:14px;background:var(--card);border:2px solid var(--line)}
+.emojis button[aria-pressed=true]{border-color:var(--accent);background:var(--soft)}
+.feel{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.feel button{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:10px 4px;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:2px}
+.feel button b{font-size:2.6rem;line-height:1.1}
+.feel button[aria-pressed=true]{border-color:var(--accent);background:var(--soft)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}.seg button{padding:8px 12px;border-radius:12px;background:var(--card);border:2px solid var(--line);font-weight:700;font-size:.92rem}
+.seg button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.celebrate{font-size:6rem;animation:pop .6s ease-out}@keyframes pop{0%{transform:scale(.2) rotate(-20deg);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+.setup{max-width:600px;margin:30px auto}
+.modes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.mode{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:14px;text-align:left}
+.mode[aria-pressed=true]{border-color:var(--accent);background:var(--soft)}.mode b{display:block;font-size:1.05rem;margin:4px 0}.mode span{font-size:.84rem;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0));transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:14px;font-weight:700;z-index:60;max-width:90vw}
+table.rv{width:100%;border-collapse:collapse;font-size:.95rem}table.rv td{padding:8px 4px;border-top:1px solid var(--line)}table.rv td:nth-child(n+2){text-align:right;white-space:nowrap;font-weight:700}
+/* timer */
+.tmr{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center}
+.tmr h3{margin:0;font-size:1.6rem}
+.ring{position:relative;width:min(70vw,360px);aspect-ratio:1}.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .tt{position:absolute;inset:0;display:grid;place-items:center;font:900 clamp(3rem,13vw,5.5rem)/1 var(--font);font-variant-numeric:tabular-nums}
+.tmr.low .tt{color:#D62839}.tmr.over{background:#FFF0F0}
+.tbtns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}.tbtns .btn{font-size:1.1rem;padding:14px 24px}
+.presets{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:14px 0}
+.presets button{min-width:96px;padding:14px 12px;border-radius:18px;background:var(--card);border:2px solid var(--line);font-weight:900;font-size:1.3rem}
+@media (max-width:640px){.tiles{grid-template-columns:1fr 1fr;gap:12px}.tile{min-height:180px}.tile .em{font-size:3.6rem}.f2,.modes{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="app"></div><div id="modal"></div><div id="toast"></div><div id="timer"></div>
+<script>
+"use strict";
+const APP_VERSION="4.4";
+/* ===== storage ===== */
+const KEY="familyquests.v3";let S=null,mem=null;
+function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):mem}catch(e){return mem}}
+function save(){mem=S;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+/* ===== dates ===== */
+const pad2=n=>String(n).padStart(2,"0");
+const dkey=d=>d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());
+const today=()=>dkey(new Date());
+function weekKey(d=new Date()){const x=new Date(d);x.setHours(12);x.setDate(x.getDate()-((x.getDay()+1)%7));return dkey(x)}
+function lastWeekKey(){const d=new Date();d.setDate(d.getDate()-7);return weekKey(d)}
+function nextSat(){const d=new Date();d.setDate(d.getDate()+((6-d.getDay()+7)%7||7));return d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"short"})}
+const nowT=()=>Date.now();
+const fmtH=m=>m%60?(m>=60?Math.floor(m/60)+" h "+m%60+" min":m+" min"):(m/60)+(m===60?" hour":" hours");
+const fmtDay=t=>new Date(t).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+const uid=()=>Math.random().toString(36).slice(2,9);
+const clone=o=>JSON.parse(JSON.stringify(o));
+/* ===== themes ===== */
+const CAT=`<svg viewBox="0 0 64 56" width="46" height="40" aria-hidden="true"><path d="M9 24 6 2l19 12zM55 24l3-22-19 12z" fill="#FFB3C7"/><ellipse cx="32" cy="32" rx="26" ry="22" fill="#fff" stroke="#FF8FB1" stroke-width="3"/><circle cx="22" cy="30" r="3.4" fill="#3A2E3F"/><circle cx="42" cy="30" r="3.4" fill="#3A2E3F"/><circle cx="23" cy="29" r="1" fill="#fff"/><circle cx="43" cy="29" r="1" fill="#fff"/><ellipse cx="15" cy="38" rx="4.2" ry="2.6" fill="#FFC2D4"/><ellipse cx="49" cy="38" rx="4.2" ry="2.6" fill="#FFC2D4"/><path d="M28 36q4 4 8 0" stroke="#3A2E3F" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M1 31h10M1 37h10M53 31h10M53 37h10" stroke="#FFB3C7" stroke-width="1.6"/></svg>`;
+const CAR=`<svg viewBox="0 0 64 32" width="58" height="29" aria-hidden="true"><path d="M3 23q0-8 10-9l9-8h16l10 8q13 1 13 9v3H3z" fill="#E63946"/><path d="M24 8h13l7 6H19z" fill="#BDE0FE"/><path d="M30 8v6" stroke="#E63946" stroke-width="2"/><circle cx="16" cy="26" r="5.4" fill="#14213D"/><circle cx="49" cy="26" r="5.4" fill="#14213D"/><circle cx="16" cy="26" r="2" fill="#fff"/><circle cx="49" cy="26" r="2" fill="#fff"/><circle cx="40" cy="19" r="4" fill="#fff"/><text x="40" y="21.6" font-size="7" font-weight="900" text-anchor="middle" fill="#14213D">4</text></svg>`;
+const TOP=`<svg viewBox="0 0 24 24" width="1.05em" height="1.05em" style="vertical-align:-.18em" aria-label="star"><ellipse cx="12" cy="10" rx="10.5" ry="4.4" fill="#E63946"/><ellipse cx="12" cy="9" rx="6.4" ry="2.5" fill="#FFB703"/><path d="M4.5 12 12 23l7.5-11z" fill="#14213D"/><circle cx="12" cy="8.6" r="1.7" fill="#fff"/></svg>`;
+const TH={cat:{tok:"🐾",icon:CAT,mv:"🐈",end:"🐟",teamI:"🐱",label:"Kawaii cats"},race:{tok:TOP,icon:CAR,mv:CAR,end:"🏁",teamI:"🏎️",label:"Racing & battle tops"},plain:{tok:"⭐",icon:"⭐",mv:"⭐",end:"🏆",teamI:"⭐",label:"Plain"}};
+const th=()=>TH[(S&&S.theme)||"plain"]||TH.plain;
+const tok=()=>th().tok;
+/* ===== defaults ===== */
+const DEF={challengeOn:false,autoOn:false,holidayFeat:false,freeOn:true,holidayCap:180,holidayUntil:"",minPerStar:4,weeklyCap:120,allowCash:false,rateMin:10,ratePence:20,minCash:30,kidTimer:true,maxQuests:6,teamOn:false,teamName:"Team",mate:"",teamPct:65,
+  treats:["Film night with popcorn","Choose Saturday dinner","Park or bike trip","Baking together","Board-game night"]};
+function starter(lay){
+  const pic=lay==="picture";
+  return [
+    {icon:"👕",name:pic?"Get dressed":"Dressed & ready by 7:30",done:pic?"Pants, socks, clothes, shoes by 7:30. All by myself = 2, with one reminder = 1.":"Dressed, hair done, shoes on by 7:30. No reminder = 2, one reminder = 1.",steps:pic?"🩲🧦👕👖👟":"",praise:"You got yourself ready all by yourself!",repeat:"school",slots:[""],kind:"prompt",reward:2},
+    {icon:"🎒",name:pic?"Pack my bag":"Pack school bag for tomorrow",done:pic?"Book bag, water bottle, PE kit by the door. A grown-up can help.":"Book bag, homework, water bottle and PE kit (if needed) by the door.",steps:pic?"📕💧👟":"",praise:"Your bag's ready for tomorrow. Great planning!",repeat:"schoolnight",slots:[""],kind:"reward",reward:1},
+    {icon:"📘",name:"Kumon",done:pic?"Today's Kumon done. A grown-up can sit with you.":"Today's Kumon sheets finished.",praise:"You sat down and got your Kumon done.",repeat:"daily",slots:[""],kind:"reward",reward:1},
+    pic?{icon:"💻",name:"School homework",done:"Today's computer work finished. A grown-up can help.",praise:"You finished your school work!",repeat:"daily",slots:[""],kind:"reward",reward:1}
+       :{icon:"🎹",name:"Piano practice",done:"10 minutes of practice.",praise:"I loved hearing you practise. (Praise the effort, not how it sounded.)",repeat:"daily",slots:[""],kind:"reward",reward:1},
+    {icon:"🧸",name:pic?"Tidy up":"Tidy up before bed",done:"Toys, books and clothes away before bedtime.",praise:"Your room looks great — thank you for tidying.",repeat:"daily",slots:[""],kind:"reward",reward:1},
+    {icon:"🌈",name:"Feelings check-in",done:"At bedtime: pick how you felt today and what helped.",praise:"Thank you for telling me how you felt.",repeat:"daily",slots:[""],kind:"check",reward:1},
+    {icon:"🌈",name:"Storm to rainbow",done:"A grown-up spots you calming down, or making up after a big feeling.",praise:"You found your way back to calm. That's a real skill.",repeat:"weekly",slots:[""],kind:"spot",reward:0,badgeIcon:"🌈"},
+    {icon:"🤝",name:"Team work",done:"A grown-up spots you helping your brother or sister, or sorting out a disagreement together without a grown-up.",praise:"You two worked that out together — brilliant team work.",repeat:"weekly",slots:[""],kind:"spot",reward:0,badgeIcon:"🤝"},
+    {paused:true,icon:"🗝️",name:"Owned up",done:"You told the truth about a mistake, even though it was hard.",praise:"Thank you for telling me the truth. That took courage.",repeat:"weekly",slots:[""],kind:"spot",reward:0,badgeIcon:"🗝️"},
+    {paused:true,icon:"🏆",name:"Good sport",done:"You lost a game or battle nicely, or said well done to the winner.",praise:"You were a really good sport — that's what champions do.",repeat:"weekly",slots:[""],kind:"spot",reward:0,badgeIcon:"🏆"},
+    {paused:true,icon:"🦁",name:"Brave try",done:"You had a go at something hard or new.",praise:"You were brave to try that. Trying is how we get better.",repeat:"weekly",slots:[""],kind:"spot",reward:0,badgeIcon:"🦁"}
+  ].map(q=>({id:uid(),mastered:false,steps:"",...q,paused:!!q.paused}));
+}
+const ICONS=["👕","🎒","📘","🎹","💻","🧸","🌈","🤝","🪥","🍽️","🛏️","🛁","🧹","📚","✏️","🎨","⚽","🏉","🛴","🤸","🐶","🌱","🧺","🎻","🐱","🏎️"];
+const FEEL=[["😊","Happy"],["🤩","Excited"],["😌","Calm"],["😟","Worried"],["😢","Sad"],["😡","Cross"],["😴","Tired"],["😖","Frustrated"],["🥰","Loved"]];
+const HELP=[["🫁","Breathing"],["🤗","A hug"],["🧸","Calm spot"],["💬","Talking"],["🎵","Music"],["🏃","Moving"],["🐱","Pet / cuddly"],["⏸️","A break"]];
+const REP={daily:"Every day",school:"School days (Mon–Fri)",schoolnight:"School nights (Sun–Thu)",weekly:"Weekly"};
+const DAYS={daily:7,school:5,schoolnight:5,weekly:1};
+/* ===== core logic ===== */
+const active=q=>q.kind!=="spot"&&!q.paused&&!q.mastered&&(!q.bonus||!!S.settings.challengeOn);
+const counted=q=>active(q)&&!q.bonus;
+const maxPts=q=>q.kind==="prompt"?2:(q.reward||0);
+function isDue(q){if(!active(q))return false;const g=new Date().getDay();
+  if(q.repeat==="school")return g>=1&&g<=5;if(q.repeat==="schoolnight")return g<=4;return true}
+function periodKey(q){return q.repeat==="weekly"?"w"+weekKey():today()}
+const mk=(q,i)=>q.id+"|"+periodKey(q)+"|"+i;
+const markOf=(q,i)=>S.marks[mk(q,i)];
+function setMark(q,i,s){S.marks[mk(q,i)]={s,t:nowT(),wk:weekKey()}}
+const weekPossible=()=>S.quests.filter(counted).reduce((a,q)=>a+DAYS[q.repeat]*q.slots.length*maxPts(q),0);
+const weekPts=(wk=weekKey())=>S.ledger.filter(x=>(x.type==="earn"||x.type==="summary")&&x.wk===wk).reduce((a,x)=>a+(x.pts||0),0);
+const teamTarget=()=>Math.max(1,Math.round(weekPossible()*S.settings.teamPct/100));
+const holidayOn=()=>!!S.settings.holidayFeat&&!!S.settings.holidayUntil&&today()<=S.settings.holidayUntil;
+const curCap=()=>holidayOn()?S.settings.holidayCap:S.settings.weeklyCap;
+const mps=()=>holidayOn()&&S.settings.weeklyCap?Math.round(S.settings.minPerStar*S.settings.holidayCap/S.settings.weeklyCap):S.settings.minPerStar;
+const capPts=()=>Math.ceil(curCap()/mps());
+const fmtDate=d=>new Date(d+"T12:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+const balance=()=>S.ledger.reduce((a,x)=>a+(x.unit==="min"?x.amt:0),0);
+const spentThisWeek=()=>Math.max(0,-S.ledger.filter(x=>(x.type==="spend"||x.type==="refund")&&weekKey(new Date(x.t))===weekKey()).reduce((a,x)=>a+x.amt,0));
+const pence=m=>Math.floor(m/S.settings.rateMin*S.settings.ratePence);
+const money=p=>"£"+(p/100).toFixed(2);
+const spokenMoney=p=>{const l=Math.floor(p/100),c=p%100;return (l?l+(l===1?" pound":" pounds"):"")+(l&&c?" and ":"")+(c||!l?c+"p":"")};
+const moneyBal=()=>S.ledger.reduce((a,x)=>a+(x.unit==="p"?x.amt:0),0);
+const toPence=v=>Math.round((parseFloat(String(v).replace(/[£,\s]/g,""))||0)*100);
+function earn(q,pts,label,wk){S.ledger.push({t:nowT(),wk:wk||weekKey(),type:"earn",unit:"min",pts,amt:pts*mps(),note:q.name+(label||"")});overflow()}
+function overflow(){if(!S.settings.allowCash)return 0;const over=balance()-curCap();if(over<=0)return 0;
+  S.ledger.push({t:nowT(),type:"overflow",unit:"min",amt:-over,note:"Minutes bank full → piggy bank"});
+  S.ledger.push({t:nowT(),type:"deposit",unit:"p",amt:pence(over),note:`${over} extra minutes (bank full)`});
+  setTimeout(()=>{toast(`Minutes bank full! ${over} extra minutes became ${money(pence(over))} in your piggy bank 🐷`)},50);return over}
+function pendingList(){const out=[];S.quests.forEach(q=>{if(!active(q))return;q.slots.forEach((sl,i)=>{const m=markOf(q,i);if(m&&m.s==="p")out.push({q,i,sl})})});return out}
+function approve(it,pts){const m=markOf(it.q,it.i);m.s="a";m.pts=pts;earn(it.q,pts,pts===1&&it.q.kind==="prompt"?" (one reminder)":"",m.wk);save();checkAuto()}
+function rollWeek(){if(S.weekOf!==weekKey()){if(S.next){S.quests=S.next;S.next=null}S.weekOf=weekKey();compact();save()}if(S.settings.holidayUntil&&!holidayOn()&&balance()>curCap()){overflow();save()}}
+/* keep storage small: after 8 weeks, a week's minute entries become one summary line and old ticks are cleared */
+function compact(){
+  const d=new Date();d.setDate(d.getDate()-56);const cut=weekKey(d),wkOf=x=>x.wk||weekKey(new Date(x.t)),sums={},keep=[];
+  S.ledger.forEach(x=>{if(x.unit!=="min"||x.type==="summary"||wkOf(x)>=cut){keep.push(x);return}
+    const w=wkOf(x),m=sums[w]||(sums[w]={t:new Date(w+"T12:00").getTime(),wk:w,type:"summary",unit:"min",amt:0,pts:0,earned:0,used:0,cashed:0,fixed:0,note:"Week summary"});
+    m.amt+=x.amt;if(x.type==="earn"){m.pts+=x.pts||0;m.earned+=x.amt}else if(x.type==="spend")m.used-=x.amt;else if(x.type==="cash"||x.type==="overflow")m.cashed-=x.amt;else if(x.type==="refund"){m.fixed+=x.amt}});
+  S.ledger=keep.concat(Object.values(sums)).sort((a,b)=>a.t-b.t);
+  Object.keys(S.marks).forEach(k=>{if((S.marks[k].wk||"")<cut)delete S.marks[k]});
+}
+function teamRec(wk=weekKey()){return S.team[wk]||(S.team[wk]={mate:null,treat:null})}
+const teamWon=wk=>!!((S.team[wk]||{}).mate&&weekPts(wk)>=teamTarget());
+function teamStreak(){let n=0,d=new Date();if(!teamWon(weekKey(d)))d.setDate(d.getDate()-7);while(teamWon(weekKey(d))){n++;d.setDate(d.getDate()-7)}return n}
+/* ===== automatic badges ===== */
+const AUTO={roll:{icon:"🔥",name:"On a roll",how:"A quest done every day for a whole week"},morning:{icon:"☀️",name:"Morning star",how:"Ready with no reminder every school day"},
+  full:{icon:"🏠",name:"Full house",how:"Every quest done in one day"},goal:{icon:"🎯",name:"Goal reached",how:"Saved enough for your goal"}};
+function dueOn(q,d){if(!active(q))return false;const g=new Date(d+"T12:00").getDay();if(q.repeat==="school")return g>=1&&g<=5;if(q.repeat==="schoolnight")return g<=4;return q.repeat!=="weekly"}
+function giveAuto(type,key,wk){if(S.badges.some(b=>b.key===key))return false;const A=AUTO[type];S.badges.push({t:nowT(),wk,key,qid:"auto:"+type,name:A.name,icon:A.icon});
+  toast(`New badge: ${A.icon} ${A.name}!`);chime();say("New badge! "+A.name+"!");return true}
+function checkAuto(){if(!S.settings.autoOn)return;
+  const lw=lastWeekKey(),ents=Object.entries(S.marks).filter(([,m])=>m.s==="a"&&(m.wk||"")>=lw);
+  // full house: per date
+  const dates=new Set(ents.map(([k])=>k.split("|")[1]).filter(d=>/^\d{4}-/.test(d)));
+  dates.forEach(d=>{const qs=S.quests.filter(q=>counted(q)&&dueOn(q,d));
+    if(qs.length&&qs.every(q=>q.slots.every((x,i)=>S.marks[q.id+"|"+d+"|"+i]?.s==="a")))giveAuto("full","full|"+d,weekKey(new Date(d+"T12:00")))});
+  // on a roll + morning star: per week
+  const wks=new Set(ents.map(([,m])=>m.wk));
+  wks.forEach(wk=>S.quests.filter(q=>counted(q)&&q.repeat!=="weekly").forEach(q=>{
+    const mine=ents.filter(([k,m])=>k.startsWith(q.id+"|")&&m.wk===wk),need=DAYS[q.repeat]*q.slots.length;
+    if(mine.length>=need)giveAuto("roll","roll|"+wk+"|"+q.id,wk);
+    if(q.kind==="prompt"&&mine.filter(([,m])=>m.pts===2).length>=need)giveAuto("morning","morning|"+wk+"|"+q.id,wk)}));
+  // goal
+  const g=S.money||{};if(g.goalP&&moneyBal()>=g.goalP)giveAuto("goal","goal|"+g.goal+"|"+g.goalP,weekKey());
+  save();
+}
+/* ===== sound ===== */
+let actx=null;
+function chime(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const t=actx.currentTime;[523.25,659.25,783.99,1046.5].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type="triangle";o.frequency.value=f;g.gain.setValueAtTime(0,t+i*.11);g.gain.linearRampToValueAtTime(.25,t+i*.11+.02);g.gain.exponentialRampToValueAtTime(.001,t+i*.11+.5);o.connect(g).connect(actx.destination);o.start(t+i*.11);o.stop(t+i*.11+.55)})}catch(e){}}
+function say(txt){try{const u=new SpeechSynthesisUtterance(txt);u.lang="en-GB";u.rate=.95;u.pitch=1.15;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+/* ===== helpers ===== */
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=s=>document.querySelector(s);
+let toastT;function toast(msg){$("#toast").innerHTML=`<div class="toast">${esc(msg)}</div>`;clearTimeout(toastT);toastT=setTimeout(()=>$("#toast").innerHTML="",2600)}
+let view="today",ptab="approve",editing=null,pinCb=null,pinBuf="",unlocked=false,forgotAns=null,rvWeek="this",ci=null,
+    setupD={layout:"quest",theme:"cat",name:"",pin:"",pin2:""};
+function closeModal(){$("#modal").innerHTML="";pinCb=null;pinBuf="";render()}
+const sheet=(inner,cls="")=>`<div class="modal"><div class="sheet ${cls}"><button class="x" data-act="close" aria-label="Close">✕</button>${inner}</div></div>`;
+
+/* ===== shared widgets ===== */
+function badgeTotals(){
+  const sp=S.quests.filter(q=>q.kind==="spot"),seen=new Set(),rows=[];
+  sp.forEach(q=>{const n=S.badges.filter(b=>b.qid?b.qid===q.id:b.name===q.name).length;seen.add(q.id);if(n||!q.paused)rows.push({icon:q.badgeIcon||q.icon,name:q.name,n})});
+  const other={};S.badges.filter(b=>!(b.qid&&seen.has(b.qid))&&!sp.some(q=>q.name===b.name)).forEach(b=>{other[b.name]=other[b.name]||{icon:b.icon,name:b.name,n:0};other[b.name].n++});
+  const autos=(S.settings.autoOn?Object.entries(AUTO):[]).map(([k,A])=>({icon:A.icon,name:A.name,n:S.badges.filter(b=>b.qid==="auto:"+k).length,how:A.how}));
+  const autoNames=new Set(autos.map(a=>a.name));
+  return rows.concat(Object.values(other).filter(o=>!autoNames.has(o.name)),autos);
+}
+function badgeTotalsHTML(){const t=badgeTotals();if(!t.length)return `<p class="muted">Badges you earn will be counted here.</p>`;
+  return `<div class="btally">${t.map(r=>{const lvl=Math.floor(r.n/10),into=r.n%10;
+    return `<div class="bt"><b>${r.icon}</b><div style="flex:1;min-width:0"><div class="n">× ${r.n}</div><small>${esc(r.name)}${lvl?` · ${"🏅".repeat(Math.min(lvl,5))}`:""}</small><div class="lv"><i style="width:${into*10}%"></i></div><small>${r.how&&!r.n?esc(r.how):`${10-into} to the next 🏅`}</small></div></div>`}).join("")}</div>`}
+function moneyCard(){
+  if(!S.settings.allowCash)return "";const m=moneyBal(),g=S.money||{},gp=g.goalP||0;
+  const hist=S.ledger.filter(x=>x.unit==="p").slice().reverse().slice(0,8);
+  return `<div class="card mbank"><div class="row" style="justify-content:space-between"><div><div class="muted" style="font-weight:800">🐷 My money bank</div><div class="bal">${money(m)}</div></div>
+    <div class="muted" style="max-width:300px;font-size:.9rem">Cash out minutes to put money in. When you buy something, a grown-up takes it out.</div></div>
+    ${gp?`<div class="goal"><b>Saving for: ${esc(g.goal)}</b> — ${money(Math.min(m,gp))} of ${money(gp)}${m>=gp?" 🎉 You've saved enough!":` · ${money(gp-m)} to go`}<div class="meter"><i style="width:${Math.min(100,m/gp*100)}%;background:#2BB673"></i></div></div>`:""}
+    ${hist.length?`<div class="mh" style="margin-top:10px">${hist.map(x=>`<div><span>${esc(x.note)} <small class="muted">· ${fmtDay(x.t)}</small></span><span class="${x.amt>0?"plus":"minus"}">${x.amt>0?"+":"−"}${money(Math.abs(x.amt))}</span></div>`).join("")}</div>`:""}</div>`}
+function badgeStrip(){
+  const wk=weekKey(),inWk=b=>(b.wk||weekKey(new Date(b.t)))===wk;
+  const sp=S.quests.filter(q=>q.kind==="spot"&&!q.paused).map(q=>({icon:q.badgeIcon||q.icon,name:q.name,n:S.badges.filter(b=>(b.qid?b.qid===q.id:b.name===q.name)&&inWk(b)).length,auto:false}));
+  const au=(S.settings.autoOn?Object.entries(AUTO):[]).map(([k,A])=>({icon:A.icon,name:A.name,n:S.badges.filter(b=>b.qid==="auto:"+k&&inWk(b)).length,auto:true})).filter(x=>x.n);
+  const all=sp.concat(au);if(!all.length)return "";
+  return `<div class="bstrip" aria-label="This week's badges">${all.map(x=>`<div class="bc ${x.n?"got":"zero"}"><b>${x.icon}</b><div><div class="n">${x.n?"× "+x.n:"ready"}</div><small>${esc(x.name)}</small></div></div>`).join("")}<div class="bnote">This week · resets Friday night</div></div>`;
+}
+function weekCard(){
+  const p=weekPts(),poss=weekPossible()||1,cap=curCap(),earned=Math.min(cap,p*mps()),cp=capPts(),tt=teamTarget(),w=Math.min(100,p/poss*100);
+  const mkr=(at,cls,lab)=>at<=poss?`<span class="mk ${cls}" style="left:${at/poss*100}%"><em>${lab}</em></span>`:"";
+  return `<div class="card"><div class="wkhead"><span>This week: ${p} ${tok()} <span class="muted">of ${poss}</span></span><span style="color:var(--teal)">📺 ${earned} of ${cap} min earned</span></div>
+  <div class="trk"><i style="width:${w}%"></i><span class="mv" style="left:${w}%">${th().mv}</span><span class="end">${th().end}</span>${mkr(cp,"","📺 "+fmtH(cap))}${S.settings.teamOn?mkr(tt,"tm","🤝 team"):""}</div>
+  ${holidayOn()?`<div class="banner" style="margin:0 0 8px">🏖️ Holiday mode until ${fmtDate(S.settings.holidayUntil)} — up to ${cap} min of screen time a week.</div>`:""}<div class="note">Every ${tok()} = ${mps()} minutes${holidayOn()?" (holiday rate)":""}. ${p>=cp?"🎉 You've earned the full "+fmtH(cap)+" this week!":`${cp-p} more for the full ${fmtH(cap)}.`}</div></div>`;
+}
+function teamCard(){
+  if(!S.settings.teamOn)return "";
+  const wk=weekKey(),r=S.team[wk]||{},lr=S.team[lastWeekKey()]||{},p=weekPts(),tt=teamTarget(),mine=p>=tt,st=teamStreak(),nm=esc(S.settings.teamName),mate=esc(S.settings.mate||"your teammate");
+  if(teamWon(wk))return `<div class="card yay team"><span class="ti">🎉</span><div class="tb"><b>Team ${nm} did it!</b>${r.done?"Hope you enjoyed your family treat!":`Time to choose a family treat together with ${mate} and the grown-ups.`}${st>1?` · 🔥 ${st} weeks in a row`:""}</div></div>`;
+  return `<div class="card team"><span class="ti">${th().teamI}🤝</span><div class="tb"><b>Team ${nm}</b>
+    <span class="muted">${mine?`Your half is done! Now cheer on ${mate} 💪`:`Your half: ${p} of ${tt} ${tok()}. When you and ${mate} both get there, the family gets a treat — and you choose it together.`}</span>
+    <div class="halves"><span><i style="width:${Math.min(100,p/tt*100)}%"></i></span><span><i style="width:${r.mate?100:0}%"></i></span></div>
+    ${teamWon(lastWeekKey())?`<div class="note" style="margin-top:6px">🎉 Team goal reached last week${st?` · 🔥 ${st} week${st>1?"s":""} in a row`:""}</div>`:""}</div></div>`;
+}
+
+/* ===== setup ===== */
+function renderSetup(){
+  document.body.className="th-"+setupD.theme;
+  const L=(v,ic,t,d)=>`<button class="mode" data-act="slay" data-v="${v}" aria-pressed="${setupD.layout===v}"><span style="font-size:1.6rem">${ic}</span><b>${t}</b><span>${d}</span></button>`;
+  const T=v=>`<button class="mode" data-act="sthm" data-v="${v}" aria-pressed="${setupD.theme===v}"><span style="font-size:1.6rem">${v==="cat"?"🐱":v==="race"?"🏎️":"⭐"}</span><b>${TH[v].label}</b></button>`;
+  $("#app").innerHTML=`<div class="wrap"><div class="setup card"><h1 style="margin:0 0 4px">Set up this iPad</h1>
+  <p class="muted" style="margin:0 0 18px">For a grown-up. Everything stays on this iPad.</p>
+  <div class="f"><label for="sn">Child's name</label><input id="sn" type="text" maxlength="20" value="${esc(setupD.name)}" placeholder="e.g. Lily"></div>
+  <div class="f"><label>Layout</label><div class="modes" style="grid-template-columns:1fr 1fr">${L("quest","🗺️","Quest","For readers (about 7+). Cards, a bank and a diary.")}${L("picture","🖼️","Picture","For little ones. Big pictures, spoken prompts, no reading.")}</div></div>
+  <div class="f"><label>Theme</label><div class="modes">${T("cat")}${T("race")}${T("plain")}</div></div>
+  <div class="f2"><div class="f"><label for="sp">Grown-up PIN (4 digits)</label><input id="sp" type="password" inputmode="numeric" maxlength="4" value="${esc(setupD.pin)}"></div><div class="f"><label for="sp2">PIN again</label><input id="sp2" type="password" inputmode="numeric" maxlength="4" value="${esc(setupD.pin2)}"></div></div>
+  <div class="err" id="serr"></div><button class="btn" data-act="sgo" style="width:100%">Start</button>
+  <p class="note" style="margin-top:14px">You'll get the 6 starter quests for this layout. Change anything later behind the 🔒, including the team name and treat menu.</p></div></div>`;
+}
+function readSetup(){setupD.name=$("#sn")?.value.trim()||"";setupD.pin=$("#sp")?.value||"";setupD.pin2=$("#sp2")?.value||""}
+function finishSetup(){readSetup();const d=setupD,e=$("#serr");
+  if(!d.name)return e.textContent="Add a name.";if(!/^\d{4}$/.test(d.pin))return e.textContent="The PIN needs to be 4 digits.";if(d.pin!==d.pin2)return e.textContent="The two PINs don't match.";
+  S={v:3,name:d.name,layout:d.layout,theme:d.theme,pin:d.pin,settings:clone(DEF),quests:starter(d.layout),next:null,weekOf:weekKey(),marks:{},ledger:[],badges:[],checkins:[],team:{},timer:null,created:nowT()};
+  save();view="today";render();}
+
+/* ===== quest layout ===== */
+function questCard(q){
+  const all=q.slots.every((s,i)=>markOf(q,i)?.s==="a");
+  const btn=(sl,i)=>{const m=markOf(q,i),lab=sl?sl+": ":"";
+    if(!m)return q.kind==="check"?`<button class="slot" data-act="check">Do my check-in</button>`:`<button class="slot" data-act="tick" data-q="${q.id}" data-i="${i}">${lab}I did it</button>`;
+    if(m.s==="p")return `<span class="slot p">⏳ ${lab}Waiting for a grown-up</span>`;
+    return `<span class="slot a">✓ ${lab}+${m.pts} ${tok()}</span>`};
+  const rw=q.kind==="prompt"?`2 ${tok()} with no reminder · 1 with one`:`+${q.reward} ${tok()}`;
+  return `<div class="q${all?" alldone":""}${q.bonus?" bonus":""}"><div class="ic">${q.icon}</div><div class="bd">${q.bonus?`<div class="ribbon">⭐ Challenge of the week · bonus</div>`:""}<div class="nm">${esc(q.name)}</div><div class="dl">Done looks like: ${esc(q.done)}</div><div class="slots">${q.slots.map((s,i)=>btn(s,i)).join("")}</div><div class="rw">${rw}</div></div></div>`;
+}
+function renderQuest(){
+  const pend=pendingList().length,bal=balance();let body="";
+  if(view==="today"){
+    const due=S.quests.filter(isDue),mast=S.quests.filter(q=>q.mastered&&q.kind!=="spot");
+    body=weekCard()+teamCard()+`<div class="grid">${due.slice().sort((a,b)=>(b.bonus?1:0)-(a.bonus?1:0)).map(questCard).join("")||`<p class="muted">Nothing due today. Enjoy!</p>`}</div>`+
+      (mast.length?`<h2>Mastered 🏆</h2><div class="mast">${mast.map(q=>`<span>${q.icon} ${esc(q.name)}</span>`).join("")}</div>`:"");
+  } else if(view==="bank"){
+    const sp=spentThisWeek(),cap=curCap(),c=S.settings.allowCash;
+    body=`<div class="card"><div class="row"><div><div class="muted" style="font-weight:800">📺 My minutes</div><div class="big">${bal}</div></div>
+      ${c?`<div class="muted" style="flex:1;min-width:200px">Worth <b style="color:var(--ink)">${money(pence(bal))}</b> if a grown-up cashes it into your money bank<br>(${S.settings.rateMin} min = ${S.settings.ratePence}p, in blocks of ${S.settings.minCash} min)</div>`:""}</div>
+      <div style="margin-top:14px"><button class="btn" data-act="tstart">📺 Start screen time</button></div>
+      <div style="margin-top:14px;font-weight:800">Screen time used this week: ${sp} of ${cap} min</div><div class="meter"><i style="width:${Math.min(100,sp/cap*100)}%"></i></div></div>
+      ${moneyCard()}<h2>My badges — all time</h2>${badgeTotalsHTML()}<h2>Minutes history</h2>${histHTML()}`;
+  } else body=diaryHTML();
+  $("#app").innerHTML=`<div class="wrap"><div class="top"><h1>${th().icon}<span>${esc(S.name)}'s Quests<small>${new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})}</small></span></h1>
+    <button class="chip" data-act="tstart">📺 ${bal} min ▶</button><button class="lock" data-act="lock" aria-label="Grown-ups">🔒${pend?`<span class="dot">${pend}</span>`:""}</button></div>
+    ${badgeStrip()}<div class="tabs">${[["today","Today"],["bank","My bank"],["diary","My feelings"]].map(([k,l])=>`<button data-act="view" data-v="${k}" aria-current="${view===k}">${l}</button>`).join("")}</div>${body}</div>`;
+}
+let histMore=8,diaryMore=10;
+function histHTML(){
+  const wk=weekKey(),wkOf=x=>x.wk||weekKey(new Date(x.t)),mins=S.ledger.filter(x=>x.unit==="min");
+  const cur=S.ledger.filter(x=>(x.unit==="min"||x.unit==="free")&&wkOf(x)===wk).reverse();
+  const weeks={};mins.filter(x=>wkOf(x)<wk).forEach(x=>{const w=wkOf(x),m=weeks[w]||(weeks[w]={pts:0,earned:0,used:0,cashed:0});
+    if(x.type==="summary"){m.pts+=x.pts;m.earned+=x.earned;m.used+=x.used-x.fixed;m.cashed+=x.cashed}
+    else if(x.type==="earn"){m.pts+=x.pts||0;m.earned+=x.amt}else if(x.type==="spend")m.used-=x.amt;else if(x.type==="refund")m.used-=x.amt;else if(x.type==="cash"||x.type==="overflow")m.cashed-=x.amt});
+  const ws=Object.keys(weeks).sort().reverse(),fmtW=w=>new Date(w+"T12:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+  return `<div class="card hist" style="padding-top:6px"><b style="display:block;padding:8px 0">This week</b>${cur.slice(0,25).map(x=>`<div><span>${esc(x.note)} <small class="muted">· ${fmtDay(x.t)}</small></span><span class="${x.unit==="free"?"muted":x.amt>0?"plus":"minus"}">${x.unit==="free"?x.mins+" min · free":x.pts?"+"+x.pts+" "+tok():(x.amt>0?"+":"")+x.amt+" min"}</span></div>`).join("")||`<p class="muted">Nothing yet this week.</p>`}</div>
+  ${ws.length?`<div class="card"><b>Earlier weeks</b><table class="rv" style="margin-top:6px"><tr><td class="muted">Week from</td><td class="muted">Earned</td><td class="muted">Screen time</td><td class="muted">To piggy bank</td></tr>
+   ${ws.slice(0,histMore).map(w=>{const m=weeks[w];return `<tr><td>Sat ${fmtW(w)}</td><td>${m.pts} ${tok()}</td><td>${Math.max(0,m.used)} min</td><td>${m.cashed?m.cashed+" min":"–"}</td></tr>`}).join("")}</table>
+   ${ws.length>histMore?`<button class="btn sm alt" data-act="hmore" style="margin-top:10px">Show older weeks</button>`:""}</div>`:""}`;
+}
+function badgesHTML(){return S.badges.length?`<div class="badges">${S.badges.slice().reverse().slice(0,24).map(b=>`<div class="badge"><b>${b.icon}</b><span>${esc(b.name)}<br>${fmtDay(b.t)}</span></div>`).join("")}</div>`:`<p class="muted">Badges you earn will appear here.</p>`}
+function histOld(){return S.ledger.filter(x=>x.unit==="min").slice().reverse().slice(0,15).map(x=>`<div><span>${esc(x.note)} <small class="muted">· ${fmtDay(x.t)}</small></span><span class="${x.amt>0?"plus":"minus"}">${x.pts?"+"+x.pts+" "+tok():(x.amt>0?"+":"")+x.amt+" min"}</span></div>`).join("")||`<p class="muted">Nothing yet — your first quest is waiting!</p>`}
+function diaryHTML(){return `<div class="card"><h3 style="margin:0 0 4px">🌈 My feelings</h3><p class="muted" style="margin:0">Every feeling is OK. Noticing them is a superpower.</p></div>`+
+  (S.checkins.slice().reverse().slice(0,diaryMore).map(c=>`<div class="card"><small class="muted" style="font-weight:800">${fmtDay(c.t)}</small><div style="font-size:1.1rem;margin-top:4px"><span style="font-size:2rem">${c.feel||""}</span> ${esc(c.feelName||"")}${c.helped&&c.helped.length?` · helped by ${c.helped.map(esc).join(", ")}`:""}</div>${c.good?`<div style="margin-top:6px">✨ ${esc(c.good)}</div>`:""}</div>`).join("")||`<p class="muted">Your check-ins will collect here.</p>`)+(S.checkins.length>diaryMore?`<button class="btn alt" data-act="dmore" style="width:100%">Show older check-ins (${S.checkins.length-diaryMore} more)</button>`:"")}
+
+/* ===== picture layout ===== */
+function renderPicture(){
+  const pend=pendingList().length,bal=balance(),due=S.quests.filter(isDue);
+  const tiles=due.map(q=>{const all=q.slots.every((s,i)=>markOf(q,i)?.s==="a"),m=markOf(q,0);
+    return `<button class="tile${all?" done":""}${q.bonus?" bonus":""}" data-act="ptap" data-q="${q.id}" aria-label="${esc(q.name)}">${q.bonus?`<div class="ribbon">⭐ Bonus challenge</div>`:""}<div class="em">${q.icon}</div><div class="lb">${esc(q.name)}</div>${q.steps?`<div class="steps">${q.steps}</div>`:""}
+    <div class="sd">${m?.s==="p"?`<span class="p">⏳</span>`:m?.s==="a"?`<span>+${m.pts} ${tok()}</span>`:`<span>${q.kind==="prompt"?tok()+tok():tok()}</span>`}</div></button>`}).join("");
+  $("#app").innerHTML=`<div class="wrap"><div class="top"><h1>${th().icon}<span style="font-size:2.2rem">${esc(S.name)}</span></h1>
+    <span class="chip" style="font-size:1.25rem">📺 ${bal} min</span>${S.settings.allowCash?`<button class="chip" data-act="mbank" style="font-size:1.25rem">🐷 ${money(moneyBal())}</button>`:""}
+    <button class="lock" data-act="lock" aria-label="Grown-ups">🔒${pend?`<span class="dot">${pend}</span>`:""}</button></div>
+    ${badgeStrip()}<div class="tiles">${tiles||`<p class="muted">All done for today!</p>`}</div><div style="height:14px"></div>${weekCard()}${teamCard()}
+    ${moneyCard()}<h2>My badges — all time</h2>${badgeTotalsHTML()}
+    <div class="pbtns"><button class="pbtn" data-act="tstart"><span>📺</span>Screen time</button></div></div>`;
+}
+function pictureTap(q){
+  if(q.kind==="check"&&!markOf(q,0)){openCheck();return}
+  const idx=q.slots.findIndex((s,i)=>!markOf(q,i));
+  if(idx<0){const p=q.slots.some((s,i)=>markOf(q,i)?.s==="p");say(p?"Done! A grown-up will check it at bedtime.":"Already done! Well done "+S.name);return}
+  setMark(q,idx,"p");save();render();chime();say("Great job, "+S.name+"! Show a grown-up at bedtime.");
+  $("#modal").innerHTML=`<div class="modal" data-act="close"><div class="sheet center"><div class="celebrate">${q.icon}</div><h3>Great job, ${esc(S.name)}!</h3><div style="font-size:2.2rem;opacity:.55">⏳ ${q.kind==="prompt"?tok()+tok():tok()}</div><p class="muted">A grown-up will check it at bedtime.</p><button class="btn" data-act="close">OK!</button></div></div>`;
+}
+function promptChoice(it,pic){
+  $("#modal").innerHTML=sheet(`<div class="center"><div style="font-size:4rem">${it.q.icon}</div><h3>${esc(it.q.name)}</h3><p class="muted">Grown-up: how did it go?</p>
+   <div class="row" style="justify-content:center;margin-top:10px"><button class="btn ok" data-act="pchoose" data-v="2" data-pic="${pic?1:0}">All by myself · +2 ${tok()}</button><button class="btn alt" data-act="pchoose" data-v="1" data-pic="${pic?1:0}">With one reminder · +1 ${tok()}</button></div></div>`);
+  pendingChoice=it;
+}
+let pendingChoice=null;
+function celebrate(q,pts){
+  chime();say("Well done "+S.name+"! "+(pts===2?"Two":pts===1?"One":pts)+(pts===1?" star!":" stars!"));
+  $("#modal").innerHTML=`<div class="modal" data-act="close"><div class="sheet center"><div class="celebrate">${S.theme==="cat"?"😺":S.theme==="race"?"🏆":"⭐"}</div><h3>Well done, ${esc(S.name)}!</h3><div style="font-size:2rem">+${pts} ${tok()}</div>
+    <div class="praise">Grown-up, say: “${esc(q.praise)}”</div><button class="btn" data-act="close">Yay!</button></div></div>`;
+}
+/* ===== check-in ===== */
+function openCheck(){
+  const ex=S.checkins.find(c=>c.d===today());ci=ex?clone(ex):{d:today(),feel:"",feelName:"",helped:[],good:""};drawCheck();
+  if(S.layout==="picture")say("How did you feel today?");
+}
+function drawCheck(){
+  $("#modal").innerHTML=sheet(`<div class="center"><div style="font-size:2.6rem">🌈</div><h3>How did you feel today?</h3><p class="muted" style="margin:0 0 12px">Pick the biggest feeling. Every feeling is OK.</p></div>
+   <div class="feel">${FEEL.map(([e,n])=>`<button data-act="cfeel" data-e="${e}" data-n="${n}" aria-pressed="${ci.feel===e}"><b>${e}</b>${n}</button>`).join("")}</div>
+   <h2>What helped today?</h2><div class="seg">${HELP.map(([e,n])=>`<button data-act="chelp" data-v="${n}" aria-pressed="${ci.helped.includes(n)}">${e} ${n}</button>`).join("")}</div>
+   <div class="f" style="margin-top:14px"><label for="cg">One good thing today ${S.layout==="picture"?"(a grown-up can write it)":"(optional)"}</label><textarea id="cg" maxlength="300" style="min-height:70px">${esc(ci.good)}</textarea></div>
+   <div class="err" id="cerr"></div><button class="btn" data-act="csave" style="width:100%">Save my check-in</button>`);
+}
+
+/* ===== PIN ===== */
+function pinPadHTML(){return `<div class="pins" id="pins">${[0,1,2,3].map(k=>`<i class="${k<pinBuf.length?"on":""}"></i>`).join("")}</div><div class="err" id="perr"></div>
+  <div class="pad">${[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map(k=>k===""?"<span></span>":`<button data-act="pin" data-k="${k}">${k}</button>`).join("")}</div>`}
+function pinPress(k){
+  if(k==="⌫")pinBuf=pinBuf.slice(0,-1);else if(pinBuf.length<4)pinBuf+=k;
+  const pins=$("#pins");if(pins)pins.innerHTML=[0,1,2,3].map(i=>`<i class="${i<pinBuf.length?"on":""}"></i>`).join("");
+  if(pinBuf.length===4){if(pinBuf===S.pin){const cb=pinCb;pinBuf="";pinCb=null;cb&&cb()}else{pinBuf="";$("#perr").textContent="That's not the PIN";pins.classList.add("shake");setTimeout(()=>{pins.classList.remove("shake");pins.innerHTML="<i></i><i></i><i></i><i></i>"},400)}}
+}
+function askPin(title,cb){pinBuf="";$("#modal").innerHTML=sheet(`<div class="center"><div style="font-size:2.4rem">🔒</div><h3>${esc(title)}</h3>${pinPadHTML()}</div>`);pinCb=()=>{$("#modal").innerHTML="";cb()}}
+function openLock(){if(unlocked){openParent();return}
+  pinBuf="";$("#modal").innerHTML=sheet(`<div class="center"><div id="lockhold" style="font-size:2.6rem;display:inline-block;padding:6px 14px;-webkit-touch-callout:none;touch-action:none;transition:transform 5s linear">🔒</div><h3>Grown-ups only</h3>${pinPadHTML()}<div id="forgotslot" style="min-height:40px"></div></div>`);
+  pinCb=()=>{unlocked=true;openParent()}}
+
+/* ===== timer (start/stop, counts down what's available) ===== */
+let tickH=null,wl=null;
+const tAvail=()=>Math.max(0,Math.min(balance(),curCap()-spentThisWeek()));
+function tElapsed(){const T=S&&S.timer;if(!T)return 0;return T.acc+(T.paused?0:Date.now()-T.run)}
+const tLeftMs=()=>Math.max(0,S.timer.avail*60000-tElapsed());
+const usedMins=()=>{const e=tElapsed();return e<30000?0:Math.max(1,Math.round(e/60000))};
+const hhmm=t=>new Date(t).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+function startSession(){
+  const av=tAvail();
+  if(av<1){$("#modal").innerHTML=sheet(`<div class="center"><div style="font-size:3rem">📺</div><h3>No screen time left</h3><p class="muted">${curCap()-spentThisWeek()<=0?"This week's limit is used up. It resets on Saturday.":"Not enough minutes yet — keep questing!"}</p></div>`);return}
+  S.timer={avail:av,acc:0,run:Date.now(),started:Date.now(),paused:false,w5:av<=5,w1:av<=1,n30:1,ended:false};save();
+  chime();say("Screen time started. You have "+av+" minutes.");
+  try{navigator.wakeLock&&navigator.wakeLock.request("screen").then(l=>wl=l).catch(()=>{})}catch(e){}renderTimer();
+}
+function charge(m,T){if(T.free){S.ledger.push({t:nowT(),type:"free",unit:"free",amt:0,mins:m,note:"🎁 Free session: "+T.reason});return}if(m>0)S.ledger.push({t:nowT(),type:"spend",unit:"min",amt:-m,note:`Screen time ${hhmm(T.started)} (${m} min)`})}
+function alarm(){chime();setTimeout(chime,700);setTimeout(chime,1400);setTimeout(()=>say("Your screen time has run out. Well done for stopping, "+S.name+"!"),2000)}
+function tick(){
+  const T=S&&S.timer;if(!T){renderTimer();return}
+  if(!T.ended&&!T.paused){const left=tLeftMs(),el=tElapsed();
+    if(left<=300000&&!T.w5){T.w5=true;save();chime();say("Five minutes left")}
+    if(left<=60000&&!T.w1){T.w1=true;save();chime();say("One minute left")}
+    if(el>=T.n30*1800000&&left>60000){say("You've had "+T.n30*30+" minutes of screen time.");T.n30++;save()}
+    if(left<=0){T.ended=true;charge(T.avail,T);save();alarm()}}
+  renderTimer();
+}
+function renderTimer(){
+  const el=$("#timer");if(!S||!S.timer){el.innerHTML="";clearInterval(tickH);tickH=null;try{wl&&wl.release();wl=null}catch(e){}return}
+  const T=S.timer;
+  if(T.ended){el.innerHTML=`<div class="tmr over"><div style="font-size:5rem">${S.theme==="race"?"🏁":"⏰"}</div><h3>Time's up, ${esc(S.name)}!</h3><p class="muted" style="margin:0;font-size:1.1rem">That's all your screen time for now. Stopping when it runs out earns a big well done 👏</p><div class="tbtns"><button class="btn" data-act="tdone">I've stopped 👍</button></div></div>`}
+  else{const ms=tLeftMs(),sec=Math.ceil(ms/1000),C=2*Math.PI*110,frac=ms/(T.avail*60000),h=Math.floor(sec/3600),m=Math.floor(sec%3600/60);
+    const clock=h?`${h}:${pad2(m)}:${pad2(sec%60)}`:`${m}:${pad2(sec%60)}`;
+    el.innerHTML=`<div class="tmr${ms<=60000&&!T.paused?" low":""}"><h3>${T.free?"🎁 Free session":S.theme==="race"?"🏎️ Race clock":S.theme==="cat"?"🐱 Screen time":"📺 Screen time"}${T.paused?" — paused":""}</h3>${T.free?`<p class="muted" style="margin:0">${esc(T.reason)} — this doesn't use your minutes</p>`:""}
+    <div class="ring"><svg viewBox="0 0 240 240"><circle cx="120" cy="120" r="110" fill="none" stroke="var(--line)" stroke-width="16"/><circle cx="120" cy="120" r="110" fill="none" stroke="${ms<=60000?"#D62839":ms<=300000?"var(--gold)":"var(--teal)"}" stroke-width="16" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-frac)}"/></svg><div class="tt" style="${h?"font-size:clamp(2.4rem,10vw,4.2rem)":""}"><div>${clock}<small style="display:block;font-size:1.1rem;font-weight:800;color:var(--muted);margin-top:6px">left to use</small></div></div></div>
+    <p style="margin:0;font-weight:800">This session so far: ${usedMins()} min</p>
+    <p class="muted" style="margin:0">${T.free?"Tap Stop when you finish.":"Tap Stop when you finish — only the minutes you used come off."}</p>
+    <div class="tbtns"><button class="btn alt" data-act="tpause">${T.paused?"Carry on":"Pause"}${S.settings.kidTimer?"":" (grown-up)"}</button><button class="btn" data-act="tstop">Stop</button></div></div>`}
+  if(!tickH)tickH=setInterval(tick,1000);
+}
+function startFree(m,reason){S.timer={avail:m,acc:0,run:Date.now(),started:Date.now(),paused:false,w5:m<=5,w1:m<=1,n30:1,ended:false,free:true,reason};save();
+  chime();say("A free screen time session! "+m+" minutes. Enjoy, "+S.name+"!");try{navigator.wakeLock&&navigator.wakeLock.request("screen").then(l=>wl=l).catch(()=>{})}catch(e){}renderTimer()}
+function startFlow(){if(S.timer){renderTimer();return}S.settings.kidTimer?startSession():askPin("Grown-up: start screen time",startSession)}
+
+/* ===== parent area ===== */
+const draftList=()=>S.next||S.quests;
+function openParent(){
+  const tabs=[["approve","Approve"],["spot","Spot it"],["pay","Pay out"],["review","Week review"],["quests","Quests"],["settings","Settings"]];
+  const pend=pendingList();let body="";
+  if(ptab==="approve"){
+    body=pend.length?pend.map((it,k)=>`<div class="li"><span class="e">${it.q.icon}</span><div class="m"><b>${esc(it.q.name)}</b><small>Done looks like: ${esc(it.q.done)}</small>${it.q.kind==="check"?checkSummary():""}</div>
+      <button class="btn sm alt" data-act="reject" data-k="${k}">Not yet</button>${it.q.kind==="prompt"?`<button class="btn sm alt" data-act="approve" data-k="${k}" data-p="1">One reminder +1</button><button class="btn sm ok" data-act="approve" data-k="${k}" data-p="2">No reminder +2</button>`:`<button class="btn sm ok" data-act="approve" data-k="${k}" data-p="${it.q.reward}">Approve +${it.q.reward}</button>`}</div>`).join("")
+      +`<div class="row" style="margin-top:4px"><button class="btn ok" data-act="apall">✓ Approve all${pend.some(i=>i.q.kind==="prompt")?" (except reminder ones)":""}</button></div><p class="note">“Not yet” just clears it — nothing is taken away. Name what they did as you approve: it's the praise that builds the habit.</p>`:`<p class="muted">Nothing waiting. 🎉</p>`;
+    body+=`<div id="praiseBox"></div>`;
+  } else if(ptab==="spot"&&editing){body=badgeForm(editing);
+  } else if(ptab==="spot"){
+    const sp=S.quests.filter(q=>q.kind==="spot"&&!q.paused);
+    body=`<p class="muted" style="margin-top:0">Award these the moment you notice them. They earn a badge, not minutes. Never mention stars or minutes during a meltdown — only afterwards, when calm.</p>`+
+      sp.map(q=>`<div class="li"><span class="e">${q.badgeIcon||q.icon}</span><div class="m"><b>${esc(q.name)}</b><small>${esc(q.done)}</small></div><button class="btn sm ok" data-act="award" data-q="${q.id}">Spotted it! 🌟</button></div>`).join("")+`<div id="praiseBox"></div>
+      <div style="margin:10px 0"><button class="btn alt" data-act="bnew">+ New badge</button></div>
+      <h2>Which badges are on</h2><p class="note" style="margin-top:-4px">Tap to switch on or off. Keep 3–4 on at a time. Switching off hides it — counts earned are kept.</p>
+      <div class="seg">${S.quests.filter(q=>q.kind==="spot").map(q=>`<button data-act="sfeat" data-q="${q.id}" aria-pressed="${!q.paused}">${q.badgeIcon||q.icon} ${esc(q.name)}</button>`).join("")}</div>
+      <h2>Edit badges</h2>${S.quests.filter(q=>q.kind==="spot").map(q=>`<div class="li"><span class="e">${q.badgeIcon||q.icon}</span><div class="m"><b>${esc(q.name)}</b><small>${S.badges.filter(b=>b.qid===q.id).length} earned so far</small></div><button class="btn sm alt" data-act="bedit" data-q="${q.id}">Edit</button></div>`).join("")}`;
+  } else if(ptab==="pay"){
+    const bal=balance(),left=Math.max(0,curCap()-spentThisWeek()),c=S.settings.allowCash;
+    body=`<div class="card"><div class="row"><div><small class="muted" style="font-weight:800">Balance</small><div class="big">${bal} min</div></div><div class="muted">${c?`= ${money(pence(bal))}<br>`:""}Screen time left this week: <b style="color:var(--ink)">${left} min</b></div></div></div>
+     <h2>Screen time</h2><div class="row"><button class="btn" data-act="tstart">📺 Start screen time</button><span class="muted">Counts down what's left; Stop takes off only what's used.</span></div>
+     ${S.settings.freeOn?FREE_HTML():""}
+     ${c?`<h2>Cash out</h2><div class="row"><input type="number" id="cashm" min="${S.settings.minCash}" step="${S.settings.minCash}" value="${bal>=S.settings.minCash?Math.floor(bal/S.settings.minCash)*S.settings.minCash:""}" style="width:130px"><span class="muted">minutes, in blocks of ${S.settings.minCash} → into the money bank</span><button class="btn" data-act="cash">Cash out</button></div>
+     <h2>🐷 Money bank: ${money(moneyBal())}</h2>
+     <div class="row" style="margin-bottom:8px"><input type="text" id="mitem" maxlength="40" placeholder="What did they buy? / Taken out as cash" style="flex:1;min-width:200px"><input type="text" id="mamt" inputmode="decimal" placeholder="£" style="width:110px"><button class="btn" data-act="mspend">Take out</button></div>
+     <div class="row" style="margin-bottom:8px"><input type="text" id="mnote" maxlength="40" placeholder="Money in, e.g. birthday money from Grandma" style="flex:1;min-width:200px"><input type="text" id="madd" inputmode="decimal" placeholder="£" style="width:110px"><button class="btn alt" data-act="maddgo">Put in</button></div>
+     <div class="row"><input type="text" id="mgoal" maxlength="40" placeholder="Saving goal, e.g. Lego set" value="${esc((S.money||{}).goal||"")}" style="flex:1;min-width:200px"><input type="text" id="mgoalp" inputmode="decimal" placeholder="£" value="${(S.money||{}).goalP?((S.money.goalP)/100).toFixed(2):""}" style="width:110px"><button class="btn alt" data-act="mgoalset">Set goal</button>${(S.money||{}).goalP?`<button class="btn alt" data-act="mgoalclr">Clear</button>`:""}</div>`:""}
+     <h2>Fix a mistake</h2><div class="row"><input type="number" id="addm" min="1" placeholder="min" style="width:130px"><input type="text" id="addn" maxlength="60" placeholder="Why? e.g. timer started by mistake" style="flex:1;min-width:200px"><button class="btn alt" data-act="addback">Add time back</button></div>
+     <p class="note">Puts minutes back in the bank and back into this week's allowance. It shows in the history.</p><div class="err" id="payerr"></div>`;
+  } else if(ptab==="review"){
+    const wk=rvWeek==="this"?weekKey():lastWeekKey(),rec=S.settings.teamOn?(S.team[wk]||{}):{},p=weekPts(wk),tt=teamTarget(),mate=esc(S.settings.mate||"the other child");
+    const rows=S.quests.filter(q=>q.kind!=="spot").map(q=>{const ms=Object.entries(S.marks).filter(([k,m])=>k.startsWith(q.id+"|")&&m.wk===wk&&m.s==="a");const got=ms.reduce((a,[,m])=>a+(m.pts||0),0);
+      return `<tr><td>${q.icon} ${esc(q.name)}${q.bonus?" <small class='muted'>(challenge · bonus)</small>":""}${q.mastered?" <small class='muted'>(mastered)</small>":q.paused?" <small class='muted'>(paused)</small>":""}</td><td>${ms.length} / ${active(q)?DAYS[q.repeat]*q.slots.length:"–"}</td><td>${got} ${tok()}</td></tr>`}).join("");
+    const bdg=S.badges.filter(b=>weekKey(new Date(b.t))===wk);
+    body=`<div class="seg" style="margin-bottom:12px"><button data-act="rvw" data-v="this" aria-pressed="${rvWeek==="this"}">This week</button><button data-act="rvw" data-v="last" aria-pressed="${rvWeek==="last"}">Last week</button></div>
+     <div class="card"><table class="rv"><tr><td><b>Quest</b></td><td><b>Done</b></td><td><b>Earned</b></td></tr>${rows}<tr><td><b>Total</b></td><td></td><td>${p} ${tok()} = ${p*S.settings.minPerStar} min</td></tr></table>
+     ${(()=>{const fs=S.ledger.filter(x=>x.type==="free"&&weekKey(new Date(x.t))===wk);return fs.length?`<p style="margin:10px 0 0">🎁 Free sessions: ${fs.length} (${fs.reduce((a,x)=>a+x.mins,0)} min) — ${fs.map(x=>esc(x.note.replace("🎁 Free session: ",""))).join(", ")}${fs.length>=2?" <small class='muted'>· if this happens most weeks, consider raising the weekly allowance instead</small>":""}</p>`:""})()}
+     ${bdg.length?`<p style="margin:10px 0 0">Badges: ${bdg.map(b=>b.icon+" "+esc(b.name)).join(", ")}</p>`:""}</div>
+     <div class="card row" style="justify-content:space-between"><span><b>💾 Weekly backup</b><br><small class="muted">${bkLabel()} · Share → Save to Files → iCloud Drive → “Family Quests backups”</small></span><button class="btn" data-act="export">Back up now</button></div>
+     <p class="note">Friday review: celebrate what went well first. Change at most 1–2 regular quests — mark a habit “mastered” once it's been automatic for 2–3 weeks, or make a struggling one easier. Set next week's challenge in Quests. Changes start Saturday.</p>
+     ${S.settings.teamOn?`<h2>Team ${esc(S.settings.teamName)}</h2><div class="card">
+       <p style="margin-top:0">${esc(S.name)}'s half: <b>${p} of ${tt}</b> ${p>=tt?"✅":"— not this week"}</p>
+       <p>Did <b>${mate}</b> reach their half?</p><div class="seg"><button data-act="tmate" data-v="1" data-w="${wk}" aria-pressed="${rec.mate===true}">Yes ✅</button><button data-act="tmate" data-v="0" data-w="${wk}" aria-pressed="${rec.mate===false}">Not this week</button></div>
+       ${p>=tt&&rec.mate?`<div class="praise">🎉 Both halves done! Sit down together tonight and let ${esc(S.name)} and ${mate} choose this weekend's treat.</div>
+         <div class="seg"><button data-act="tdone2" data-w="${wk}" aria-pressed="${!!rec.done}">${rec.done?"Treat enjoyed ✓":"Mark treat as enjoyed"}</button></div>`
+       :rec.mate===false||p<tt?`<p class="note">No blame — “we'll try again next week.” If one child keeps missing, lower the team % in Settings.</p>`:""}
+       <p class="note">Do the same on the other iPad so both show the result.</p></div>`:""}`;
+  } else if(ptab==="quests"){
+    if(editing)body=questForm(editing);
+    else{const D=draftList(),n=D.filter(counted).length;
+      body=(S.next?`<div class="banner">✏️ Changes saved for <b>${nextSat()}</b>. The children still see this week's list until then.<div class="row" style="margin-top:8px"><button class="btn sm alt" data-act="qapply">Apply now (setting up / mistake)</button><button class="btn sm alt" data-act="qdiscard">Discard changes</button></div></div>`
+        :`<p class="note" style="margin-top:0">Edits start next Saturday, so the rules never change mid-week. Weeks run Saturday to Friday.</p>`)+
+      (()=>{if(!S.settings.challengeOn)return "";const c=D.find(q=>q.bonus&&!q.paused),cur=S.quests.find(q=>q.bonus&&!q.paused);
+        return `<div class="card" style="border-color:var(--gold);border-style:dashed;background:#FFFCEB"><b>⭐ Challenge of the week</b> <span class="muted">— a bonus trial: earns ${tok()} but isn't in the target, so it can only help.</span>
+        <p style="margin:8px 0">${cur?`This week: ${cur.icon} <b>${esc(cur.name)}</b>`:"No challenge this week."}${S.next?`<br>From ${nextSat()}: ${c?`${c.icon} <b>${esc(c.name)}</b>`:"none"}`:""}</p>
+        <div class="row"><button class="btn sm" data-act="cset">${c?"Change":"Set"} next week's challenge</button>${c?`<button class="btn sm alt" data-act="qedit" data-q="${c.id}">Edit</button><button class="btn sm alt" data-act="cpromote" data-q="${c.id}">Make it a regular quest</button><button class="btn sm alt" data-act="cremove" data-q="${c.id}">Remove</button>`:""}</div></div>`})()+
+      `<p style="font-weight:800">Regular quests: ${n} of ${S.settings.maxQuests}</p>`+
+      D.filter(q=>!q.bonus).map(q=>`<div class="li"><span class="e" style="${q.paused||q.mastered?"opacity:.4":""}">${q.icon}</span><div class="m"><b>${esc(q.name)}${q.mastered?" · 🏆 mastered":q.paused?" · paused":""}</b>
+        <small>${q.kind==="spot"?"Spot it → badge (not counted)":REP[q.repeat]+" · "+(q.kind==="prompt"?"2 / 1 with reminder":q.kind==="check"?"Feelings check-in · "+q.reward:q.reward)+" "+tok()}</small></div>
+        ${q.kind!=="spot"?`<button class="btn sm alt" data-act="qmast" data-q="${q.id}">${q.mastered?"Un-master":"Mastered"}</button>`:""}<button class="btn sm alt" data-act="qpause" data-q="${q.id}">${q.paused?"Resume":"Pause"}</button><button class="btn sm alt" data-act="qedit" data-q="${q.id}">Edit</button></div>`).join("")+
+      `<button class="btn" data-act="qnew">+ Add a quest</button><div class="err" id="qlerr"></div>`}
+  } else body=settingsHTML();
+  $("#modal").innerHTML=`<div class="modal"><div class="sheet wide"><button class="x" data-act="close" aria-label="Close">✕</button><h1 style="margin:0 0 8px;font-size:1.5rem">Grown-ups 🔓</h1>${(()=>{const dd=Math.floor((nowT()-(S.lastBackup||S.created||nowT()))/864e5);return dd>=8?`<div class="banner">💾 ${S.lastBackup?`Last backup ${dd} days ago`:"No backup yet"}. <button class="btn sm" data-act="export">Back up now</button></div>`:""})()}
+    <div class="ptabs">${tabs.map(([k,l])=>`<button data-act="ptab" data-v="${k}" aria-current="${ptab===k}">${l}${k==="approve"&&pend.length?` (${pend.length})`:""}</button>`).join("")}</div>${body}
+    <p style="margin-top:18px"><button class="btn sm alt" data-act="relock">🔒 Lock</button></p></div></div>`;
+  const imp=$("#imp");if(imp)imp.onchange=doImport;
+}
+function checkSummary(){const c=S.checkins.find(x=>x.d===today());return c?`<small style="display:block;margin-top:4px;color:var(--ink)">${c.feel} ${esc(c.feelName)}${c.helped.length?" · helped by "+c.helped.map(esc).join(", "):""}${c.good?" · ✨ "+esc(c.good):""}</small><small>Ask about it — the chat is the real reward.</small>`:""}
+function FREE_HTML(){return `<h2>🎁 Free session</h2><p class="note" style="margin-top:-4px">For occasions grown-ups choose — not because someone asked. Doesn't use their minutes or this week's allowance.</p>
+     <div class="seg" style="margin-bottom:8px">${["Long journey","Unwell","Visitors","Rainy holiday day","Special occasion"].map(r=>`<button data-act="freason" data-v="${r}">${r}</button>`).join("")}</div>
+     <div class="row"><input type="text" id="frs" maxlength="50" placeholder="Reason (required)" style="flex:1;min-width:200px"><input type="number" id="frm" min="5" step="5" value="30" style="width:100px"><span class="muted">min</span><button class="btn" data-act="fgo">Start free session</button></div>`}
+function HOL_HTML(st){return `<h2>🏖️ Holiday mode</h2>${holidayOn()?`<div class="banner">On until <b>${fmtDate(st.holidayUntil)}</b> — ${st.holidayCap} min a week. <button class="btn sm alt" data-act="holend">End now</button></div>`:""}
+  <div class="f2"><div class="f"><label for="s_hc">Holiday weekly screen time (min)</label><input id="s_hc" type="number" min="0" step="10" value="${st.holidayCap}"></div><div class="f"><label for="s_hu">Until (last day of the holiday)</label><input id="s_hu" type="date" value="${esc(st.holidayUntil)}"></div></div>
+  <button class="btn alt" data-act="holgo">${holidayOn()?"Update holiday mode":"Start holiday mode"}</button><p class="note">Each ${tok()} is worth more in holiday mode (${Math.round(st.minPerStar*st.holidayCap/(st.weeklyCap||1))} min instead of ${st.minPerStar}), so the same effort earns the bigger allowance. It goes back to normal by itself after that date. Set it on both iPads. Tip: pause school-day quests (Dressed by 7:30, School bag) in Quests for the holiday.</p>`}
+const FEATS=[["allowCash","🐷","Money bank","Cash out minutes, saving goal, full minutes bank → piggy bank"],["teamOn","🤝","Team goal","Shared weekly goal with the other child"],
+  ["challengeOn","⭐","Challenge of the week","A bonus trial quest you change weekly"],["autoOn","🔥","Automatic badges","On a roll, Morning star, Full house, Goal reached"],
+  ["holidayFeat","🏖️","Holiday mode","A bigger allowance for school holidays"],["freeOn","🎁","Free sessions","Grown-up-given screen time, with a reason"]];
+function featuresHTML(st){const spots=S.quests.filter(q=>q.kind==="spot");
+  return `<h2>Features</h2><p class="note" style="margin-top:-4px">Start small and switch features on every 2–3 weeks. Switching off hides a feature — nothing earned is deleted. Keep both iPads the same.</p>
+  ${FEATS.map(([k,ic,t,d])=>`<div class="li"><span class="e">${ic}</span><div class="m"><b>${t}</b><small>${d}</small></div><div class="seg"><button data-act="feat" data-k="${k}" data-v="1" aria-pressed="${!!st[k]}">On</button><button data-act="feat" data-k="${k}" data-v="0" aria-pressed="${!st[k]}">Off</button></div></div>`).join("")}
+  <div class="li" style="align-items:flex-start"><span class="e">🌈</span><div class="m"><b>Spot-it badges</b><small>Tap to switch each on or off. Keep 3–4 at most.</small>
+   <div class="seg" style="margin-top:8px">${spots.map(q=>`<button data-act="sfeat" data-q="${q.id}" aria-pressed="${!q.paused}">${q.badgeIcon||q.icon} ${esc(q.name)}</button>`).join("")}</div></div></div>`}
+function settingsHTML(){const st=S.settings,poss=weekPossible();
+  return `${featuresHTML(st)}<div class="f2"><div class="f"><label for="s_name">Child's name</label><input id="s_name" type="text" value="${esc(S.name)}"></div><div class="f"><label>Theme</label><div class="seg">${Object.keys(TH).map(k=>`<button data-act="sth" data-v="${k}" aria-pressed="${S.theme===k}">${TH[k].label}</button>`).join("")}</div></div></div>
+  <h2>Rewards</h2><div class="f2"><div class="f"><label for="s_mps">Minutes per ${tok()}</label><input id="s_mps" type="number" min="1" value="${st.minPerStar}"></div><div class="f"><label for="s_cap">Weekly screen-time cap (min)</label><input id="s_cap" type="number" min="0" step="10" value="${st.weeklyCap}"></div></div>
+  <p class="note" style="margin-top:-6px">${esc(S.name)} can earn up to ${poss} ${tok()} a week (${poss*mps()} min). The full ${curCap()} min takes ${capPts()} ${tok()} — about ${Math.round(capPts()/(poss||1)*100)}%. Keep the minutes per star the same on both iPads.</p>
+  <p class="note">Screen time here means <b>solo</b> screen time. Films and shows watched together as a family don't count. The minutes bank holds one week's allowance; extra minutes go into the piggy bank${st.allowCash?"":" (switch cash out on for this)"}.</p>
+  ${st.holidayFeat?HOL_HTML(st):""}
+  <h2>Quests</h2><div class="f2"><div class="f"><label for="s_max">Max counted quests</label><input id="s_max" type="number" min="1" max="12" value="${st.maxQuests}"></div><div class="f"><label>Who starts the screen-time timer?</label><div class="seg"><button data-act="skt" data-v="1" aria-pressed="${!!st.kidTimer}">${esc(S.name)} (trust)</button><button data-act="skt" data-v="0" aria-pressed="${!st.kidTimer}">Grown-up PIN</button></div></div></div>
+  ${st.allowCash?`<h2>Money</h2><div class="f2"><div class="f"><label for="s_rm">Exchange: minutes…</label><input id="s_rm" type="number" min="1" value="${st.rateMin}"></div><div class="f"><label for="s_rp">…are worth (pence)</label><input id="s_rp" type="number" min="0" value="${st.ratePence}"></div></div><div class="f"><label for="s_min">Cash-out block (min)</label><input id="s_min" type="number" min="1" value="${st.minCash}" style="width:140px"></div>`:""}
+  ${st.teamOn?`<h2>Team goal</h2><div class="f2"><div class="f"><label for="s_tn">Team name</label><input id="s_tn" type="text" maxlength="30" value="${esc(st.teamName)}"></div><div class="f"><label for="s_mate">Teammate's name (the other child)</label><input id="s_mate" type="text" maxlength="20" value="${esc(st.mate)}"></div></div>
+  <div class="f"><label for="s_tp">Team target (% of possible ${tok()})</label><input id="s_tp" type="number" min="10" max="100" step="5" value="${st.teamPct}" style="width:140px"></div>`:""}
+  <button class="btn" data-act="ssave">Save settings</button><div class="err" id="serr2"></div>
+  <h2>Change PIN</h2><div class="row"><input id="s_pin" type="password" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN" style="width:220px"><button class="btn alt" data-act="spin">Change</button></div>
+  <h2>Backup</h2><p style="margin:-4px 0 8px;font-weight:700">${bkLabel()}</p><div class="row"><button class="btn" data-act="export">💾 Back up now</button><label class="btn alt">Import backup<input type="file" accept=".json,application/json" id="imp" hidden></label></div>
+  <p class="note">Backups rotate through 4 files per child (backup-1 to backup-4), so you always have the last 4 weeks. When saving, choose <b>Replace</b> if asked. To restore, pick the newest one — the date is shown when it loads.</p>
+  <h2>Copy settings to the other iPad</h2><div class="row"><button class="btn alt" data-act="sexport">📤 Copy settings</button></div>
+  <p class="note">Makes a small file with features, rates, holiday mode, team name and badges — never this child's progress or quests. AirDrop it to the other iPad, then use Import backup there. It keeps both iPads the same.</p>
+  <p class="note">App version ${APP_VERSION}</p>
+  <h2>Start again</h2><button class="btn alt" data-act="reset" style="color:#D62839">Erase everything on this iPad…</button>`}
+const BICONS=["🌈","🤝","🗝️","🏆","🦁","💬","🍽️","🥦","🧘","🎁","💡","🌟","🐢","🦸","🧹","📚","🎨","💪","🙏","❤️","🌻","🚀","🐱","🏎️"];
+function badgeForm(q){const isNew=!q._orig,n=isNew?0:S.badges.filter(b=>b.qid===q._orig).length;
+  return `<h3 style="margin:0 0 10px">${isNew?"New badge":"Edit badge"}</h3>
+  <div class="f"><label>Picture</label><div class="emojis">${BICONS.map(e=>`<button data-act="bicon" data-e="${e}" aria-pressed="${q.badgeIcon===e}">${e}</button>`).join("")}</div></div>
+  <div class="f"><label for="b_name">Badge name</label><input id="b_name" type="text" maxlength="30" value="${esc(q.name)}" placeholder="e.g. Kind words"></div>
+  <div class="f"><label for="b_done">You earn this when… <span class="muted">(what the child sees)</span></label><input id="b_done" type="text" maxlength="140" value="${esc(q.done)}" placeholder="e.g. You used kind words when you were cross."></div>
+  <div class="f"><label for="b_praise">Praise to say when you award it</label><input id="b_praise" type="text" maxlength="120" value="${esc(q.praise||"")}"></div>
+  <div class="row"><button class="btn" data-act="bsave">${isNew?"Add badge (switched on)":"Save"}</button><button class="btn alt" data-act="bcancel">Cancel</button>
+  ${isNew?"":n?`<span class="note" style="margin-left:auto">Earned ${n}× — switch it off instead of deleting, so the counts are kept.</span>`:`<button class="btn alt" data-act="bdel" style="color:#D62839;margin-left:auto">Delete</button>`}</div>
+  <p class="note">Badges start straight away — they don't change targets or minutes. Keep 3–4 on at a time.</p><div class="err" id="berr"></div>`}
+function questForm(q){
+  const isNew=!q._orig;
+  return `${q.bonus?`<div class="banner">⭐ Challenge of the week — a bonus trial. It earns ${tok()} but isn't counted in the target. Starts Saturday.</div>`:""}<div class="f"><label>Picture</label><div class="emojis">${ICONS.map(e=>`<button data-act="qicon" data-e="${e}" aria-pressed="${q.icon===e}">${e}</button>`).join("")}</div></div>
+  <div class="f"><label for="q_name">Name</label><input id="q_name" type="text" maxlength="40" value="${esc(q.name)}"></div>
+  <div class="f"><label for="q_done">Done looks like… <span class="muted">(what the child sees)</span></label><input id="q_done" type="text" maxlength="140" value="${esc(q.done)}"></div>
+  <div class="f"><label for="q_praise">Praise to say when you approve</label><input id="q_praise" type="text" maxlength="120" value="${esc(q.praise||"")}"></div>
+  <div class="f"><label>Type</label><div class="seg">${(q.bonus?[["reward","Earns "+tok()],["prompt","2 / 1 with a reminder"]]:[["reward","Earns "+tok()],["prompt","2 / 1 with a reminder"],["check","Feelings check-in"],["spot","Spot it → badge"]]).map(([k,l])=>`<button data-act="qkind" data-v="${k}" aria-pressed="${q.kind===k}">${l}</button>`).join("")}</div></div>
+  ${q.kind!=="spot"?`<div class="f"><label>Repeats</label><div class="seg">${Object.entries(REP).map(([k,l])=>`<button data-act="qrep" data-v="${k}" aria-pressed="${q.repeat===k}">${l}</button>`).join("")}</div></div>
+  <div class="f"><label>Times a day</label><div class="seg"><button data-act="qslots" data-v="1" aria-pressed="${q.slots.length===1}">Once</button><button data-act="qslots" data-v="2" aria-pressed="${q.slots.length===2}">Morning & night</button></div></div>`:""}
+  ${q.kind==="reward"||q.kind==="check"?`<div class="f"><label for="q_rew">${tok()} earned${q.slots.length>1?" each time":""}</label><input id="q_rew" type="number" min="0" max="5" value="${q.reward}" style="width:140px"></div>`:""}
+  <div class="f"><label for="q_steps">Picture checklist (optional, emoji)</label><input id="q_steps" type="text" maxlength="20" value="${esc(q.steps||"")}"></div>
+  <div class="row"><button class="btn" data-act="qsave">${isNew?"Add quest":"Save"}</button><button class="btn alt" data-act="qcancel">Cancel</button>${isNew?"":`<button class="btn alt" data-act="qdel" style="color:#D62839;margin-left:auto">Delete</button>`}</div>
+  <p class="note">Saved for next Saturday.</p><div class="err" id="qerr"></div>`}
+function readQ(){const q=editing,v=id=>$(id)?.value;if(!q)return;
+  if($("#q_name"))q.name=v("#q_name").trim();if($("#q_done"))q.done=v("#q_done").trim();if($("#q_praise"))q.praise=v("#q_praise").trim();
+  if($("#q_rew"))q.reward=Math.max(0,parseInt(v("#q_rew"))||0);if($("#q_steps"))q.steps=v("#q_steps").trim()}
+function commitDraft(D,errSel){const n=D.filter(counted).length;
+  if(n>S.settings.maxQuests){const e=$(errSel);if(e)e.textContent=`That would make ${n} regular quests — the limit is ${S.settings.maxQuests}. Mark one as mastered or pause it first.`;return false}
+  S.next=D;save();return true}
+function showPraise(q,extra){const el=$("#praiseBox");if(el)el.innerHTML=`<div class="praise">Say it now: “${esc(q.praise||"Well done!")}”${extra||""}</div>`}
+const bkAge=()=>S.lastBackup?Math.floor((nowT()-S.lastBackup)/864e5):null;
+const bkLabel=()=>{const d=bkAge();return d===null?"No backup yet":d===0?"Backed up today ✓":`Last backup ${d} day${d>1?"s":""} ago`};
+const SHARED=["minPerStar","weeklyCap","holidayCap","holidayUntil","allowCash","rateMin","ratePence","minCash","kidTimer","maxQuests","teamOn","teamName","teamPct","challengeOn","autoOn","holidayFeat","freeOn"];
+async function shareText(text,name,title){try{const f=new File([text],name,{type:"application/json"});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title});return "shared"}}catch(e){if(e&&e.name==="AbortError")return "cancel"}
+  try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:"application/json"}));a.download=name;document.body.appendChild(a);a.click();a.remove();return "saved"}catch(e){return "fail"}}
+async function exportSettings(){
+  const st={};SHARED.forEach(k=>st[k]=S.settings[k]);
+  const badges=S.quests.filter(q=>q.kind==="spot").map(q=>({name:q.name,icon:q.icon,badgeIcon:q.badgeIcon,done:q.done,praise:q.praise,paused:!!q.paused}));
+  const r=await shareText(JSON.stringify({kind:"quests-settings",v:1,from:S.name,date:today(),settings:st,badges}),"quests-settings.json","Quests settings");
+  toast(r==="cancel"?"Cancelled":r==="fail"?"Couldn't save the file here":"Settings file ready — AirDrop it to the other iPad");
+}
+function applySettingsFile(d){
+  SHARED.forEach(k=>{if(k in d.settings)S.settings[k]=d.settings[k]});
+  (d.badges||[]).forEach(b=>{let q=S.quests.find(x=>x.kind==="spot"&&x.name===b.name);
+    if(!q){q={id:uid(),icon:b.icon,name:b.name,done:b.done,praise:b.praise,repeat:"weekly",slots:[""],kind:"spot",reward:0,badgeIcon:b.badgeIcon,mastered:false,steps:"",custom:true};S.quests.push(q)}
+    q.paused=b.paused;q.badgeIcon=b.badgeIcon;q.done=b.done;q.praise=b.praise});
+  S.quests.filter(q=>q.kind==="spot"&&!(d.badges||[]).some(b=>b.name===q.name)).forEach(q=>q.paused=true);
+  if(S.next)S.quests.filter(q=>q.kind==="spot").forEach(q=>{const n=S.next.find(x=>x.id===q.id);if(n)Object.assign(n,q);else S.next.push(clone(q))});
+  overflow();save();unlocked=true;openParent();render();toast("Settings copied from "+(d.from||"the other iPad")+" ✓");
+}
+async function doExport(){
+  const slot=(S.bkSlot||0)%4+1,name=`quests-${S.name.toLowerCase().replace(/\W+/g,"-")}-backup-${slot}.json`;
+  S.backupDate=today();const text=JSON.stringify(S);
+  const done=how=>{S.lastBackup=nowT();S.bkSlot=slot;save();openParent();toast(how+` (slot ${slot} of 4 — choose Replace if asked)`)};
+  try{const f=new File([text],name,{type:"application/json"});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:"Quests backup — "+S.name});done("Backup shared ✓ — check it saved to iCloud Drive");return}}
+  catch(e){if(e&&e.name==="AbortError"){toast("Backup cancelled — nothing saved");return}}
+  try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:"application/json"}));a.download=name;document.body.appendChild(a);a.click();a.remove();done("Backup saved to Files → Downloads")}
+  catch(e){toast("Couldn't save a backup here")}
+}
+function doImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);
+  if(d&&d.kind==="quests-settings"){applySettingsFile(d);return}
+  const m=migrate(d);if(!m)throw 0;S=m;save();unlocked=false;closeModal();toast("Backup loaded — "+S.name+(S.backupDate?" · from "+fmtDate(S.backupDate):""))}catch(x){toast("That file isn't a Quests backup")}};r.readAsText(f);e.target.value=""}
+
+/* hidden reset: hold the padlock for 5 seconds */
+let holdT=null;
+function holdEnd(){clearTimeout(holdT);holdT=null;const el=$("#lockhold");if(el)el.style.transform=""}
+document.addEventListener("pointerdown",e=>{const el=e.target.closest("#lockhold");if(!el)return;e.preventDefault();el.style.transform="scale(1.35)";
+  holdT=setTimeout(()=>{holdT=null;const sl=$("#forgotslot");if(sl)sl.innerHTML=`<button class="btn sm alt" data-act="forgot">Reset PIN</button>`;el.style.transform="";try{navigator.vibrate&&navigator.vibrate(40)}catch(x){}},5000)});
+["pointerup","pointercancel","pointerleave"].forEach(t=>document.addEventListener(t,e=>{if(holdT)holdEnd()},true));
+document.addEventListener("contextmenu",e=>{if(e.target.closest("#lockhold"))e.preventDefault()});
+/* ===== events ===== */
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act,d=b.dataset;
+  if(a==="close"&&b.classList.contains("modal")&&e.target!==b)return;
+  const Q=id=>S.quests.find(q=>q.id===id),DQ=id=>draftList().find(q=>q.id===id);
+  switch(a){
+    case "slay":readSetup();setupD.layout=d.v;renderSetup();break;
+    case "sthm":readSetup();setupD.theme=d.v;renderSetup();break;
+    case "sgo":finishSetup();break;
+    case "view":view=d.v;histMore=8;diaryMore=10;render();break;
+    case "hmore":histMore+=26;render();break;
+    case "dmore":diaryMore+=30;render();break;
+    case "tick":{const q=Q(d.q);setMark(q,+d.i,"p");save();render();toast("Nice! Show a grown-up so they can approve it.");break}
+    case "check":openCheck();break;
+    case "cfeel":ci.feel=d.e;ci.feelName=d.n;ci.good=$("#cg").value;drawCheck();if(S.layout==="picture")say(d.n);break;
+    case "chelp":ci.good=$("#cg").value;ci.helped=ci.helped.includes(d.v)?ci.helped.filter(x=>x!==d.v):[...ci.helped,d.v];drawCheck();break;
+    case "csave":{if(!ci.feel)return $("#cerr").textContent="Pick a feeling first.";ci.good=($("#cg").value||"").trim();ci.t=nowT();
+      S.checkins=S.checkins.filter(c=>c.d!==ci.d);S.checkins.push(ci);const q=S.quests.find(x=>x.kind==="check"&&isDue(x));
+      if(q&&!markOf(q,0))setMark(q,0,"p");save();
+      closeModal();chime();if(S.layout==="picture")say("Thank you for sharing your feelings!");toast("Check-in saved 🌈 A grown-up will check it at bedtime.");break}
+    case "ptap":pictureTap(Q(d.q));break;
+    case "pchoose":{const it=pendingChoice;pendingChoice=null;approve(it,+d.v);if(d.pic==="1")celebrate(it.q,+d.v);else{chime();openParent();showPraise(it.q)}render();break}
+    case "pin":pinPress(d.k);break;
+    case "lock":openLock();break;
+    case "close":closeModal();break;
+    case "relock":unlocked=false;closeModal();break;
+    case "ptab":ptab=d.v;editing=null;openParent();break;
+    case "approve":{const it=pendingList()[+d.k];if(!it)break;approve(it,+d.p);chime();openParent();showPraise(it.q);render();break}
+    case "apall":{const L=pendingList().filter(i=>i.q.kind!=="prompt");L.forEach(it=>approve(it,it.q.reward));chime();if(S.layout==="picture")say("Well done "+S.name+"! You got "+L.reduce((a,i)=>a+i.q.reward,0)+" stars today!");openParent();render();toast(L.length+" approved");break}
+    case "reject":{const it=pendingList()[+d.k];if(!it)break;delete S.marks[mk(it.q,it.i)];save();openParent();render();break}
+    case "award":{const q=Q(d.q);S.badges.push({t:nowT(),qid:q.id,name:q.name,icon:q.badgeIcon||q.icon});save();chime();if(S.layout==="picture")say("Wow, "+S.name+"! You got a "+q.name+" badge!");openParent();showPraise(q,`<br>${q.badgeIcon||q.icon} Badge added.`);render();break}
+    case "forgot":{const x=120+Math.floor(Math.random()*780),y=13+Math.floor(Math.random()*77);forgotAns=x*y;pinCb=null;pinBuf="";
+      $("#modal").innerHTML=sheet(`<h3>Reset the PIN</h3><p class="muted">A grown-up sum, to keep little hands out:</p><div class="f"><label for="fa">What is ${x} × ${y}?</label><input id="fa" type="number" inputmode="numeric"></div><div class="f"><label for="fp">New 4-digit PIN</label><input id="fp" type="password" inputmode="numeric" maxlength="4"></div><div class="err" id="ferr"></div><button class="btn" data-act="forgotgo">Reset PIN</button>`);break}
+    case "forgotgo":{if(parseInt($("#fa").value)!==forgotAns)return $("#ferr").textContent="That's not right — try again.";const np=$("#fp").value;if(!/^\d{4}$/.test(np))return $("#ferr").textContent="PIN must be 4 digits.";S.pin=np;save();unlocked=true;toast("PIN reset");openParent();break}
+    case "tstart":startFlow();break;
+    case "freason":$("#frs").value=d.v;break;
+    case "fgo":{const r=($("#frs").value||"").trim(),m=parseInt($("#frm").value)||0,err=$("#payerr");if(!r)return err.textContent="Add the reason for the free session.";if(m<1)return err.textContent="How many minutes?";if(S.timer)return err.textContent="A timer is already running.";$("#modal").innerHTML="";startFree(m,r);render();break}
+    case "tpause":(S.settings.kidTimer?(t,f)=>f():askPin)("Grown-up: pause / carry on",()=>{const T=S.timer;if(!T||T.ended)return;if(T.paused){T.run=Date.now();T.paused=false}else{T.acc+=Date.now()-T.run;T.paused=true}save();renderTimer()});break;
+    case "tstop":{const T=S.timer;if(!T)break;if(T.ended){S.timer=null;save();renderTimer();render();break}const u=Math.min(T.avail,usedMins());charge(u,T);S.timer=null;save();renderTimer();render();chime();say("Well done for stopping!");toast(T.free?"Free session finished":`${u} min used · ${balance()} min left in the bank`);break}
+    case "tdone":S.timer=null;save();renderTimer();render();break;
+    case "cash":{const err=$("#payerr"),m=parseInt($("#cashm").value)||0,bal=balance();
+      if(m<=0)return err.textContent="Enter some minutes.";if(m>bal)return err.textContent=`Only ${bal} minutes in the bank.`;
+      if(m%S.settings.minCash)return err.textContent=`Cash out in blocks of ${S.settings.minCash} minutes.`;
+      S.ledger.push({t:nowT(),type:"cash",unit:"min",amt:-m,note:"Cashed out to money bank"});S.ledger.push({t:nowT(),type:"deposit",unit:"p",amt:pence(m),note:`Cashed out ${m} minutes`});save();checkAuto();chime();openParent();render();toast(`${money(pence(m))} added to the money bank`);break}
+    case "mspend":{const err=$("#payerr"),a2=toPence($("#mamt").value),it=($("#mitem").value||"").trim()||"Spent";if(a2<=0)return err.textContent="Enter an amount, e.g. 2.50";if(a2>moneyBal())return err.textContent=`Only ${money(moneyBal())} in the money bank.`;
+      S.ledger.push({t:nowT(),type:"buy",unit:"p",amt:-a2,note:it});save();openParent();render();toast(`${money(a2)} taken out · ${money(moneyBal())} left`);break}
+    case "maddgo":{const err=$("#payerr"),a2=toPence($("#madd").value);if(a2<=0)return err.textContent="Enter an amount, e.g. 5";S.ledger.push({t:nowT(),type:"gift",unit:"p",amt:a2,note:($("#mnote").value||"").trim()||"Money in"});save();checkAuto();openParent();render();toast(`${money(a2)} added`);break}
+    case "mgoalset":{const g=($("#mgoal").value||"").trim(),gp=toPence($("#mgoalp").value);if(!g||gp<=0)return $("#payerr").textContent="Add what they're saving for and how much.";S.money={goal:g,goalP:gp};save();checkAuto();openParent();render();toast("Saving goal set");break}
+    case "mgoalclr":S.money={};save();openParent();render();break;
+    case "mbank":$("#modal").innerHTML=sheet(moneyCard());if(S.layout==="picture")say("You have "+spokenMoney(moneyBal())+" in your money bank");break;
+    case "addback":{const m=parseInt($("#addm").value)||0;if(m<=0)return $("#payerr").textContent="Enter the minutes to add back.";const n=($("#addn").value||"").trim();
+      S.ledger.push({t:nowT(),type:"refund",unit:"min",amt:m,note:"Added back by a grown-up"+(n?": "+n:"")});save();openParent();render();toast(m+" minutes added back");break}
+    case "rvw":rvWeek=d.v;openParent();break;
+    case "tmate":{const r=S.team[d.w]||(S.team[d.w]={mate:null,treat:null});r.mate=d.v==="1";save();if(teamWon(d.w)){chime();say("Team "+S.settings.teamName+" did it!")}openParent();render();break}
+    case "tdone2":{const r=S.team[d.w]||(S.team[d.w]={});r.done=!r.done;save();openParent();render();break}
+    case "ttreat":{const r=S.team[d.w];r.treat=S.settings.treats[+d.i];save();chime();say("Team "+S.settings.teamName+" did it! Treat time!");openParent();render();break}
+    case "tclear":S.team[d.w].treat=null;save();openParent();render();break;
+    case "qnew":editing={id:uid(),icon:"⭐",name:"",done:"",praise:"",repeat:"daily",slots:[""],reward:1,kind:"reward",paused:false,mastered:false,steps:"",badgeIcon:"🏅"};openParent();break;
+    case "qedit":editing=clone(DQ(d.q));editing._orig=d.q;openParent();break;
+    case "qpause":case "qmast":{const D=clone(draftList()),q=D.find(x=>x.id===d.q);if(a==="qpause")q.paused=!q.paused;else q.mastered=!q.mastered;if(commitDraft(D,"#qlerr"))openParent();break}
+    case "qicon":readQ();editing.icon=d.e;openParent();break;
+    case "qrep":readQ();editing.repeat=d.v;openParent();break;
+    case "qslots":readQ();editing.slots=d.v==="2"?["Morning","Night"]:[""];openParent();break;
+    case "qkind":readQ();editing.kind=d.v;if(d.v==="spot"){editing.repeat="weekly";editing.reward=0;editing.badgeIcon=editing.icon}else if(d.v==="prompt")editing.reward=2;else if(!editing.reward)editing.reward=1;openParent();break;
+    case "cset":editing={id:uid(),icon:"⭐",name:"",done:"",praise:"",repeat:"daily",slots:[""],reward:1,kind:"reward",paused:false,mastered:false,steps:"",bonus:true};openParent();break;
+    case "cremove":{const D=clone(draftList()).filter(q=>q.id!==d.q);S.next=D;save();openParent();break}
+    case "cpromote":{const D=clone(draftList()),q=D.find(x=>x.id===d.q);q.bonus=false;if(commitDraft(D,"#qlerr")){toast("It becomes a regular quest from Saturday");openParent()}break}
+    case "qcancel":editing=null;openParent();break;
+    case "qsave":{readQ();if(!editing.name)return $("#qerr").textContent="Give it a name.";const o=editing._orig;delete editing._orig;const D=clone(draftList());
+      if(editing.bonus){for(let i=D.length-1;i>=0;i--)if(D[i].bonus&&D[i].id!==(o||editing.id))D.splice(i,1)}
+      if(o)D[D.findIndex(q=>q.id===o)]=editing;else D.push(editing);if(!commitDraft(D,"#qerr")){editing._orig=o;break}editing=null;openParent();toast("Saved for next Saturday");break}
+    case "qdel":{if(b.dataset.sure!=="1"){b.dataset.sure="1";b.textContent="Tap again to delete";break}const o=editing._orig;S.next=clone(draftList()).filter(q=>q.id!==o);save();editing=null;openParent();break}
+    case "qapply":S.quests=S.next;S.next=null;save();openParent();render();toast("Changes applied now");break;
+    case "qdiscard":S.next=null;save();openParent();break;
+    case "sth":S.theme=d.v;save();render();openParent();break;
+    case "holgo":{const hc=parseInt($("#s_hc").value)||0,hu=$("#s_hu").value;if(!hu||hu<today())return $("#serr2").textContent="Pick the last day of the holiday (today or later).";S.settings.holidayCap=Math.max(0,hc);S.settings.holidayUntil=hu;save();render();openParent();toast("🏖️ Holiday mode on until "+fmtDate(hu));break}
+    case "holend":S.settings.holidayUntil="";save();overflow();save();render();openParent();toast("Holiday mode ended");break;
+    case "skt":S.settings.kidTimer=d.v==="1";save();openParent();break;
+    case "feat":{S.settings[d.k]=d.v==="1";if(d.k==="allowCash"&&S.settings.allowCash)overflow();if(d.k==="autoOn"&&S.settings.autoOn)checkAuto();save();openParent();render();break}
+    case "bnew":editing={id:uid(),icon:"🌟",badgeIcon:"🌟",name:"",done:"",praise:"",repeat:"weekly",slots:[""],kind:"spot",reward:0,paused:false,mastered:false,steps:"",custom:true};openParent();break;
+    case "bedit":editing=clone(S.quests.find(q=>q.id===d.q));editing._orig=d.q;openParent();break;
+    case "bicon":editing.name=$("#b_name").value;editing.done=$("#b_done").value;editing.praise=$("#b_praise").value;editing.badgeIcon=editing.icon=d.e;openParent();break;
+    case "bcancel":editing=null;openParent();break;
+    case "bsave":{const nm=($("#b_name").value||"").trim();if(!nm)return $("#berr").textContent="Give the badge a name.";
+      if(S.quests.some(q=>q.kind==="spot"&&q.name.toLowerCase()===nm.toLowerCase()&&q.id!==(editing._orig||editing.id)))return $("#berr").textContent="There's already a badge with that name.";
+      editing.name=nm;editing.done=($("#b_done").value||"").trim();editing.praise=($("#b_praise").value||"").trim();const o=editing._orig;delete editing._orig;
+      const put=L=>{if(!L)return;const i=L.findIndex(q=>q.id===(o||editing.id));if(i>=0)L[i]={...L[i],...clone(editing)};else L.push(clone(editing))};
+      put(S.quests);put(S.next);S.badges.forEach(b=>{if(b.qid===editing.id){b.name=editing.name;b.icon=editing.badgeIcon}});
+      editing=null;save();openParent();render();toast("Badge saved");break}
+    case "bdel":{if(b.dataset.sure!=="1"){b.dataset.sure="1";b.textContent="Tap again to delete";break}const o=editing._orig;S.quests=S.quests.filter(q=>q.id!==o);if(S.next)S.next=S.next.filter(q=>q.id!==o);editing=null;save();openParent();render();break}
+    case "sexport":exportSettings();break;
+    case "sfeat":{const q=S.quests.find(x=>x.id===d.q);q.paused=!q.paused;if(S.next){const n=S.next.find(x=>x.id===d.q);if(n)n.paused=q.paused}save();openParent();render();break}
+    case "scash":S.settings.allowCash=d.v==="1";save();openParent();render();break;
+    case "steam":S.settings.teamOn=d.v==="1";save();openParent();render();break;
+    case "tradd":{const v=($("#s_tr").value||"").trim();if(v){S.settings.treats.push(v);save()}openParent();break}
+    case "trdel":S.settings.treats.splice(+d.i,1);save();openParent();break;
+    case "ssave":{const st=S.settings,n=id=>parseInt($(id)?.value),t=id=>($(id)?.value||"").trim();S.name=t("#s_name")||S.name;
+      st.minPerStar=Math.max(1,n("#s_mps")||4);st.weeklyCap=Math.max(0,n("#s_cap")||0);st.maxQuests=Math.min(12,Math.max(1,n("#s_max")||6));
+      if(st.allowCash){st.rateMin=Math.max(1,n("#s_rm")||10);st.ratePence=Math.max(0,n("#s_rp")||0);st.minCash=Math.max(1,n("#s_min")||1)}
+      if(st.teamOn){st.teamName=t("#s_tn")||st.teamName;st.mate=t("#s_mate");st.teamPct=Math.min(100,Math.max(10,n("#s_tp")||65))}
+      save();render();openParent();toast("Settings saved");break}
+    case "spin":{const p=$("#s_pin").value;if(!/^\d{4}$/.test(p))return $("#serr2").textContent="PIN must be 4 digits.";S.pin=p;save();toast("PIN changed");openParent();break}
+    case "export":doExport();break;
+    case "reset":{if(b.dataset.sure!=="1"){b.dataset.sure="1";b.textContent="Tap again — this erases all progress on this iPad";break}try{localStorage.removeItem(KEY)}catch(x){}S=null;mem=null;unlocked=false;$("#modal").innerHTML="";render();break}
+  }
+});
+/* ===== render ===== */
+function render(){
+  if(!S){renderSetup();renderTimer();return}
+  rollWeek();document.body.className="th-"+S.theme;
+  S.layout==="picture"?renderPicture():renderQuest();renderTimer();
+}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist().catch(()=>{})}catch(e){}
+/* upgrade older saved data instead of resetting it */
+function migrate(d){
+  if(!d||typeof d!=="object"||!Array.isArray(d.quests))return null;
+  if(d.v!==3)return null; // pre-launch preview data only
+  d.settings={...DEF,...(d.settings||{})};
+  ["marks","team","money"].forEach(k=>{if(!d[k]||typeof d[k]!=="object")d[k]={}});
+  ["ledger","badges","checkins"].forEach(k=>{if(!Array.isArray(d[k]))d[k]=[]});
+  if(!("next" in d))d.next=null;if(!d.weekOf)d.weekOf=weekKey();if(!d.bkSlot)d.bkSlot=0;
+  d.quests.forEach(q=>{if(!Array.isArray(q.slots))q.slots=[""];if(q.kind==="spot"&&!q.badgeIcon)q.badgeIcon=q.icon});
+  d.appVersion=APP_VERSION;return d;
+}
+S=migrate(load());if(S){compact();save()}render();
+/* offline + updates (only when installed from your own site) */
+if("serviceWorker" in navigator&&location.protocol==="https:"){try{navigator.serviceWorker.register("sw.js").then(reg=>{
+  const ready=w=>{w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller)showUpdate(w)})};
+  if(reg.waiting&&navigator.serviceWorker.controller)showUpdate(reg.waiting);reg.addEventListener("updatefound",()=>ready(reg.installing));
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")reg.update().catch(()=>{})});
+}).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!reloaded){reloaded=true;location.reload()}})}catch(e){}}
+function showUpdate(w){const el=document.createElement("div");el.className="toast";el.style.cssText+="display:flex;gap:12px;align-items:center";
+  el.innerHTML=`✨ Update ready <button class="btn sm" style="background:#fff;color:var(--ink)">Tap to restart</button>`;el.querySelector("button").onclick=()=>w.postMessage("skip");document.body.appendChild(el)}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&S)render()});
+</script>
+</body>
+</html>
